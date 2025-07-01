@@ -40,7 +40,7 @@ export const useUserStore = defineStore('user', {
       await api.post(`login`, {username: username, password: password})
       await this.refreshUserData()
     },
-    async register(username: string, password: string, token: string) {
+    async register(username: string, password: string, token: string | null) {
       if (token == null) {
         await api.post(`register`, {username: username, password: password})
       } else {

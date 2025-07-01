@@ -17,11 +17,11 @@ onBeforeMount(async () => {
   }
 });
 
-async function login(data, node) {
+async function login(data: any, node: any) {
   try {
     await user_data.login(data.username, data.password);
     await router.replace("/")
-  } catch (e) {
+  } catch {
     node.setErrors(
       ['Invalid username or password'],
     )

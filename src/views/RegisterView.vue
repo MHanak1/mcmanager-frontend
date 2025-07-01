@@ -5,7 +5,6 @@ import router from '@/router'
 import { onBeforeMount, ref } from 'vue'
 import InfoBoxComponent from '@/components/InfoBoxComponent.vue'
 import { mande } from 'mande'
-import { routes } from 'vue-router/auto-routes'
 import { useRoute } from 'vue-router'
 
 const user_data = useUserStore();
@@ -13,21 +12,29 @@ const server_data = useServerDataStore();
 
 const api = mande("/api")
 
-let token = useRoute().query.t
+let token: string | null = null
+if (useRoute().query.t != null) {
+  token = useRoute().query.t as string
+}
 let can_register = token != null || !server_data.info.requires_invite
 
 if (!server_data.info.requires_invite)
 token = null;
 
 const token_valid = ref( true)
+interface IsValid {
+  valid: boolean
+}
 
 
 onBeforeMount(async () => {
   console.log(token)
   if (token != null) {
-    token_valid.value = (await api.get(`valid/invite_link/${token}`)).valid
-    console.log(token_valid)
-    can_register = can_register && token_valid
+    const response: IsValid = await api.get(`valid/invite_link/${token}`)
+    token_valid.value = response.valid
+    console.log(response)
+
+    can_register = can_register && token_valid.value
   }
 
   console.log(token_valid)
@@ -43,12 +50,12 @@ onBeforeMount(async () => {
   }
 });
 
-async function register(data, node) {
+async function register(data: any, node: any) {
   try {
     await user_data.register(data.username, data.password, token);
     await router.replace("/")
-  } catch (e) {
-    let status = e.response.status
+  } catch (e: any) {
+    const status = e.response.status
 
     if (status === 400) {
       node.setErrors(['Username or password include invalid characters'],)
@@ -66,9 +73,9 @@ async function register(data, node) {
   }
 }
 
-const username_exists = async function ({ value }) {
+const username_exists = async function ( { value }: any ) {
   console.log(value)
-  let response = await api.get(`valid/username/${value}`)
+  const response: IsValid = await api.get(`valid/username/${value}`)
   console.log(response)
 
   return response.valid;
@@ -138,7 +145,7 @@ username_exists.skipEmpty = true;
 
     <div class="flex flex-col max-w-[60vw] overflow-y-scroll gap-4 flex-[2]">
       <InfoBoxComponent v-if="!can_register && token_valid" title="No Invite" type="warning" message="This server requires an invite to register" class="self-center shadow-lg" />
-      <InfoBoxComponent v-if="!token_valid" title="Invalid Token" type="warning" message="The token provided is invalid" class="self-center shadow-lg" />
+      <InfoBoxComponent v-if="!token_valid" title="Invalid Invite" type="warning" message="The invite link is is invalid or expired" class="self-center shadow-lg" />
       <InfoBoxComponent v-if="server_data.info.login_message !== ''" :title="server_data.info.login_message_title" :type="server_data.info.login_message_type" :message="server_data.info.login_message" class="self-center shadow-lg" />
     </div>
     <!--
