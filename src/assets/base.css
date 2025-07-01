@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+
+  --color-background: var(--color-sky-50);
+  --color-bg-start: rgba(123, 8, 199, 1);
+  --color-bg-end: rgba(253, 29, 29, 1);
+
+  --color-fg-1: var(--color-sky-300);
+  --color-fg-2: var(--color-sky-400);
+  --color-fg-3: var(--color-sky-500);
+
+  --color-text: var(--color-stone-900);
+  --color-accent: var(--color-violet-500);
+
+  --border-size: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--color-indigo-950);
+
+    --color-text: var(--color-stone-100);
+    --color-accent: var(--color-violet-500);
+  }
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  transition:
+    color 0.5s,
+    background-color 0.5s;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
