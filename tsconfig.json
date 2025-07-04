@@ -9,6 +9,9 @@
     }
   ],
   "compilerOptions": {
-    "checkJs": false
+    "checkJs": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { mande } from 'mande'
-import router from '@/router'
+import type {Group, User} from "@/lib/types.ts";
 
 const api = mande("/api")
 
@@ -59,29 +59,3 @@ export const useUserStore = defineStore('user', {
     }
   }
 })
-
-type Id = string;
-type Token = string;
-
-
-interface User {
-  id: Id;
-  username: string;
-  avatar_id: Id | null;
-  group_id: Id;
-  enabled: boolean;
-}
-
-interface Group {
-  id: Id,
-  name: string;
-  total_memory_limit: number | null;
-  per_world_memory_limit: number | null;
-  world_limit: number | null;
-  active_world_limit: number | null;
-  storage_limit: number | null;
-  config_blacklist: string[];
-  config_whitelist: string[];
-  config_limits: {[key: string]: string | null};
-  is_privileged: boolean;
-}

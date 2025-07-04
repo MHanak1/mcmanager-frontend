@@ -6,7 +6,6 @@ import { onBeforeMount } from 'vue'
 import InfoBoxComponent from '@/components/InfoBoxComponent.vue'
 
 
-
 const user_data = useUserStore();
 const server_data = useServerDataStore();
 
@@ -47,6 +46,7 @@ async function login(data: any, node: any) {
           classes: {
             form: 'flex flex-col gap-4 items-center',
             input: 'input input_l',
+            message: 'text-red-500 text-md '
           },
         }"
         @submit="login"

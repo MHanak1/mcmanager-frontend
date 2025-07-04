@@ -12,7 +12,7 @@ const user_data = useUserStore()
   <main>
     <Header/>
 
-    Logged in as {{ user_data.user.username }} (ID: {{user_data.user.id}}, Group: {{user_data.group.name}})
+    <router-view/>
 
   </main>
 </template>

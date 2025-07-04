@@ -13,6 +13,8 @@
   background: radial-gradient(circle at 100% 250%, var(--color-bg-end) 50%, var(--color-bg-start) 100%);
 }
 
+.input-light:active:not(:disabled),
+.input-light:focus:not(:disabled),
 .input:active:not(:disabled),
 .input:focus:not(:disabled) {
   box-shadow: 0px 0px 5px 2px rgba(0,0,0,0.3) inset;
@@ -23,7 +25,12 @@
   background-color: rgba(0, 0, 0, 0.2);
 }
 
-.input:disabled {
+.input-light:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.input:disabled,
+.input-light:disabled {
   @apply text-black/30;
 }
 
@@ -31,9 +38,15 @@
   @apply rounded-xl;
   background-color: rgba(0, 0, 0, 0.15);
   border: none;
-  padding: 0.2rem 0.45rem;
+  padding: 0.3rem 0.6rem;
 }
 
+.input-light {
+  @apply rounded-xl;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  padding: 0.3rem 0.6rem;
+}
 
 .input_l {
   font-size: 1.2rem;
@@ -55,5 +68,46 @@ button {
 @media (prefers-color-scheme: dark){
   .invert_if_dark {
     filter: invert(100%);
+  }
+}
+
+.grid300 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 450px) {
+  .grid300 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 600px) {
+  .grid300 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .grid300 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .grid300 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1500px) {
+  .grid300 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1800px) {
+  .grid300 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }

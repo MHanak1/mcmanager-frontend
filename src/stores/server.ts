@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { mande } from 'mande'
 import router from '@/router'
+import type {ServerInfo} from "@/lib/types.ts";
 
 const api = mande("/api")
 
@@ -39,11 +40,3 @@ export const useServerDataStore = defineStore('server', {
     }
   }
 })
-
-interface ServerInfo {
-  name: string;
-  login_message: string;
-  login_message_title: string;
-  login_message_type: string;
-  requires_invite: boolean;
-}
