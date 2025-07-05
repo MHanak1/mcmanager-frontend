@@ -11,6 +11,7 @@ export interface ServerInfo {
     hostname: string;
     min_memory: number;
     default_memory: number;
+    port: number;
   }
 }
 

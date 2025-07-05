@@ -161,33 +161,35 @@ onBeforeMount(async () => {
 
 <template>
   <div class="flex flex-1 flex-col sm:flex-row " v-if="data_loaded">
-    <div class="w-full lg:w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 overflow-y-auto">
+    <div class="w-full min-w-[20rem] sm:max-w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 overflow-y-auto">
       <UseImage :src="`/api/worlds/${world.id}/icon`" class="rounded-md w-full aspect-square">
         <template #error>
           <img src="@/assets/world_default.png" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
         </template>
       </UseImage>
-      <div class="flex justify-between items-center">
         <div>
-          <p class="text-2xl lg:text-4xl font-bold mb-1">{{world.name}}</p>
-          <p class="lg:text-lg">{{loader.name}} {{version.minecraft_version}}</p>
-          <p class="lg:text-lg">{{world.hostname}}.{{server.info.world.hostname}}</p>
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">{{world.name}}</p>
+              <p class="lg:text-lg">{{loader.name}} {{version.minecraft_version}}</p>
+            </div>
+            <Button v-if="world_status.status === 'running'" variant="destructive" @click="updateWorldStatus(false)">
+              <CgSpinner v-if="world_operation_running" class="animate-spin" />
+              <Icon v-else icon="radix-icons:stop"/>
+              Stop World
+            </Button>
+            <Button v-else-if="other_enabled_world_count < (user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
+              <CgSpinner v-if="world_operation_running" class="animate-spin"/>
+              <Icon v-else icon="radix-icons:play"/>
+              Start World
+            </Button>
+            <Button v-else disabled>
+              <Icon icon="radix-icons:play"/>
+              Start World
+            </Button>
+          </div>
+          <p class="lg:text-lg">{{world.hostname}}.{{server.info.world.hostname}}{{server.info.world.port == 25565 ? '' : server.info.world.port}}</p>
         </div>
-        <Button v-if="world_status.status === 'running'" variant="destructive" @click="updateWorldStatus(false)">
-          <CgSpinner v-if="world_operation_running" class="animate-spin" />
-          <Icon v-else icon="radix-icons:stop"/>
-          Stop World
-        </Button>
-        <Button v-else-if="other_enabled_world_count < (user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
-          <CgSpinner v-if="world_operation_running" class="animate-spin"/>
-          <Icon v-else icon="radix-icons:play"/>
-          Start World
-        </Button>
-        <Button v-else disabled>
-          <Icon icon="radix-icons:play"/>
-          Start World
-        </Button>
-      </div>
       <hr/>
       <p class="text-2xl lg:text-4xl font-bold mb-1">Update World Settings</p>
 
