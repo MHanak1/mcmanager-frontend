@@ -25,9 +25,9 @@ const mode = useColorMode()
   <header class=" bg-popover flex flex-row gap-2 p-4 text-xl items-center justify-between shadow-md shadow-shadow">
     <div class="flex items-center justify-start gap-4 font-bold">
       <!--<img alt="App logo" class="h-8" src="../assets/icon.png"/>-->
-      <div class="text-2xl">
+      <router-link to="/" class="text-2xl" >
         {{server_data.info.name}}
-      </div>
+      </router-link>
 
     </div>
 
@@ -55,8 +55,8 @@ const mode = useColorMode()
 
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Avatar class="size-16 shadow-md shadow-shadow ">
-          <AvatarImage :src="'/api/users/' + user_data.user.id + '/icon'"/>
+        <Avatar class="size-12 shadow-md shadow-shadow ">
+          <AvatarImage :src="`/api/users/${user_data.user.id}/icon`"/>
           <AvatarFallback>
             {{user_data.user.username[0].toUpperCase()}}
           </AvatarFallback>

@@ -122,7 +122,7 @@ onBeforeMount(async () => {
             <FormItem class="flex flex-col justify-center">
               <FormLabel>World Name</FormLabel>
               <FormControl>
-                <Input placeholder="World Name" v-bind="field" class="col-span-3 input" />
+                <Input placeholder="World Name" v-bind="field" class="col-span-3" />
               </FormControl>
               <FormDescription />
               <FormMessage />
@@ -133,7 +133,7 @@ onBeforeMount(async () => {
             <FormItem class="flex flex-col justify-center">
               <FormLabel>Hostname</FormLabel>
               <FormControl>
-                <Input placeholder="Hostname" v-bind="field"  class="col-span-3 input" />
+                <Input placeholder="Hostname" v-bind="field"  class="col-span-3" />
               </FormControl>
               <FormDescription>
                 This world will be available at {{field.value ?? "hostname"}}.{{server.info.world.hostname}}
@@ -179,12 +179,6 @@ onBeforeMount(async () => {
                   </ComboboxAnchor>
 
                   <ComboboxList>
-                    <div class="relative w-full max-w-sm items-center">
-                      <ComboboxInput class="pl-9 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Select framework..." />
-                      <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
-                      <Search class="size-4 text-muted-foreground" />
-                      </span>
-                    </div>
 
                     <ComboboxEmpty>
                       No framework found.
@@ -260,7 +254,7 @@ onBeforeMount(async () => {
           </FormField>
 
           <DialogFooter>
-            <Button type="submit" class="input-light">
+            <Button type="submit">
               Create
             </Button>
           </DialogFooter>

@@ -98,7 +98,7 @@ username_valid.skipEmpty = true;
         :config="{
           classes: {
             form: 'flex flex-col gap-4 items-center',
-            input: 'input input_l',
+            input: 'input input-l',
           },
         }"
         @submit="register"
@@ -122,14 +122,14 @@ username_valid.skipEmpty = true;
           name="password"
           placeholder="Password"
           validation="required:trim"
-          class="input input_l"
+          class="input input-l"
         />
         <FormKit
           type="password"
           name="password_confirm"
           placeholder="Confirm Password"
           validation="required:trim|confirm"
-          class="input input_l"
+          class="input input-l"
           :validation-messages="{
             required: 'Passwords do not match',
             confirm: 'Passwords do not match',

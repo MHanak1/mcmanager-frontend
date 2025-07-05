@@ -65,6 +65,11 @@ export interface World {
   enabled: boolean
 }
 
+export interface WorldStatus {
+  status: string;
+  code: number;
+}
+
 export interface IsValid {
   valid: boolean
 }

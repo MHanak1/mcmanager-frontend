@@ -45,7 +45,7 @@ async function login(data: any, node: any) {
         :config="{
           classes: {
             form: 'flex flex-col gap-4 items-center',
-            input: 'input input_l',
+            input: 'input input-l',
             message: 'text-red-500 text-md '
           },
         }"
@@ -65,7 +65,7 @@ async function login(data: any, node: any) {
           id="password"
           placeholder="Password"
           validation="required:trim"
-          class="input input_l"
+          class="input input-l"
         />
         <div v-if="!server_data.info.requires_invite"> Don't have an account? <router-link class="underline" to="/register">Register here</router-link>  </div>
 
