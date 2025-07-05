@@ -178,7 +178,7 @@ onBeforeMount(async () => {
           <Icon v-else icon="radix-icons:stop"/>
           Stop World
         </Button>
-        <Button v-else-if="other_enabled_world_count < user.group.active_world_limit" variant="green" @click="updateWorldStatus(true)">
+        <Button v-else-if="other_enabled_world_count < (user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
           <CgSpinner v-if="world_operation_running" class="animate-spin"/>
           <Icon v-else icon="radix-icons:play"/>
           Start World
