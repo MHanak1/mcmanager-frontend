@@ -49,7 +49,7 @@ export interface ModLoader {
   can_load_mods: boolean,
 }
 
-export interface Verion {
+export interface Version {
   id: Id,
   minecraft_version: string,
   mod_loader_id: Id,
@@ -63,4 +63,8 @@ export interface World {
   allocated_memory: number
   version_id: Id,
   enabled: boolean
+}
+
+export interface IsValid {
+  valid: boolean
 }

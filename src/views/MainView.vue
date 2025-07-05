@@ -9,10 +9,8 @@ const user_data = useUserStore()
 </script>
 
 <template>
-  <main>
+  <main class="min-h-screen flex flex-col">
     <Header/>
-
     <router-view/>
-
   </main>
 </template>

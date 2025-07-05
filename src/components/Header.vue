@@ -22,7 +22,7 @@ const mode = useColorMode()
 </script>
 
 <template>
-  <header class=" bg-popover flex flex-row gap-2 p-4 text-xl items-center justify-between shadow-lg shadow-shadow">
+  <header class=" bg-popover flex flex-row gap-2 p-4 text-xl items-center justify-between shadow-md shadow-shadow">
     <div class="flex items-center justify-start gap-4 font-bold">
       <!--<img alt="App logo" class="h-8" src="../assets/icon.png"/>-->
       <div class="text-2xl">
@@ -57,7 +57,9 @@ const mode = useColorMode()
       <DropdownMenuTrigger>
         <Avatar class="size-16 shadow-md shadow-shadow ">
           <AvatarImage :src="'/api/users/' + user_data.user.id + '/icon'"/>
-          <AvatarFallback>{{user_data.user.username[0].toUpperCase}}</AvatarFallback>
+          <AvatarFallback>
+            {{user_data.user.username[0].toUpperCase()}}
+          </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="m-2">
@@ -70,8 +72,6 @@ const mode = useColorMode()
         </DropdownMenuItem>
         <DropdownMenuItem @click="user_data.logout()">
           Log Out
-        </DropdownMenuItem>
-        <DropdownMenuItem>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

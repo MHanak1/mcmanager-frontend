@@ -65,6 +65,10 @@ button {
   border: none;
 }
 
+.hoverable {
+  @apply hover:shadow-lg transition-transform hover:scale-105;
+}
+
 @media (prefers-color-scheme: dark){
   .invert_if_dark {
     filter: invert(100%);

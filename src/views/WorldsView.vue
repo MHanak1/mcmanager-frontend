@@ -2,10 +2,10 @@
 import { mande } from 'mande'
 import ImageCard from '@/components/ImageCard.vue'
 import { onBeforeMount, ref } from 'vue'
-import type {ModLoader, Verion, World} from '@/lib/types.ts'
+import type {IsValid, ModLoader, Version, World} from '@/lib/types.ts'
 import {useServerDataStore} from "@/stores/server.ts";
 import {
-  Dialog, DialogClose,
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -13,9 +13,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '@/components/ui/combobox'
+import { Combobox, ComboboxTrigger, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '@/components/ui/combobox'
 import {cn} from "@/lib/utils.ts";
-import { Check, Search } from 'lucide-vue-next'
+import { Check, Search, ChevronsUpDown } from 'lucide-vue-next'
 
 import * as z from 'zod'
 
@@ -32,73 +32,94 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Slider} from "@/components/ui/slider";
 
+import { Icon } from '@iconify/vue';
+
 import {useUserStore} from "@/stores/user.ts";
+import {useForm, Field} from "vee-validate";
+import { UseImage } from "@vueuse/components";
 import {toTypedSchema} from "@vee-validate/zod";
-import {useForm} from "vee-validate";
 
 const api = mande("/api")
-
 const user = useUserStore()
 const server = useServerDataStore()
 
-
 const worlds = ref([] as World[])
 const mod_loaders = ref([] as ModLoader[])
+const versions = ref([] as Version[])
 
-const versions = ref([] as Verion[])
+const selected_loader = ref(undefined as ModLoader | undefined)
+const selected_verison = ref(undefined as Version | undefined)
+const search_value = ref(undefined as string | undefined)
 
 const dialog_open = ref(false)
 
 const worldFormSchema = toTypedSchema(z.object({
   //username: z.string().min(2).max(50),
   name: z.string().min(1).max(255),
-  hostname: z.string().toLowerCase().min(2).max(255),
+  hostname: z.string().min(2).max(255).regex(/^[a-z0-9]+$/, "The hostname can contain only lowercase letters and numbers"),
   memory: z.any(),
   version_id: z.string()
 }))
 
 const world_form = useForm({
-  validationSchema: worldFormSchema,
-})
+    validationSchema: worldFormSchema
+  }
+)
+
+async function validateHostname(hostname: any) {
+  const response: IsValid = await api.get(`/valid/hostname/${hostname}`)
+  return response.valid;
+}
 
 const onWorldSubmit = world_form.handleSubmit(async (values: any) => {
-  await api.post("/worlds", values)
-  worlds.value = await api.get('worlds') as World[]
-  console.log('Form submitted!', values)
+  if (await validateHostname(values.hostname)) {
+    await api.post("/worlds", values)
+    worlds.value = await api.get(`worlds?owner_id=${user.user.id}`) as World[]
+    dialog_open.value = false
+  } else {
+    world_form.setFieldError("hostname", "Hostname is already taken")
+  }
 })
 
-//todo: change this
+
+
 onBeforeMount(async () => {
-  worlds.value = await api.get('worlds') as World[]
+  worlds.value = await api.get(`worlds?owner_id=${user.user.id}`) as World[]
   mod_loaders.value = await api.get('mod_loaders') as ModLoader[]
-  versions.value = await api.get('versions')
-  console.log(versions.value)
+  //versions.value = await api.get('versions')
 });
 </script>
 
 <template>
   <div class="grid300 gap-4 p-4">
-    <a v-for="world in worlds" v-bind:key="world.id">
-      <ImageCard v-if="world.enabled" :image="'/api/worlds/'+world.id+'/icon'" :title="world.name" :description="world.hostname + '.' + server.info.world.hostname"/>
-      <ImageCard v-else class="grayscale bg-muted" :image="'/api/worlds/'+world.id+'/icon'" :title="world.name" :description="world.hostname + '.' + server.info.world.hostname"/>
-    </a>
+    <router-link :to=" '/worlds/'+world.id" v-for="world in worlds" v-bind:key="world.id">
+      <ImageCard :class="world.enabled ? '' : 'grayscale bg-muted'" :title="world.name" :description="world.hostname">
+        <UseImage :src="`/api/worlds/${world.id}/icon`" class="rounded-md w-full aspect-square">
+          <template #error>
+            <img src="@/assets/world_default.png" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
+          </template>
+        </UseImage>
+      </ImageCard>
+    </router-link>
 
 
-    <Dialog>
+    <Dialog v-if="(user.group.world_limit ?? 1000000) > worlds.length" v-model:open="dialog_open" onopen="">
       <DialogTrigger>
-        <ImageCard image="/src/assets/plus.svg" title="New" description="Create new world"/>
+        <ImageCard title="New" description="Create new world">
+          <div class="rounded-md w-full aspect-square flex items-center justify-center text-muted-foreground">
+            <Icon icon="radix-icons:plus" class="size-[30%]"/>
+          </div>
+        </ImageCard>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New World</DialogTitle>
-          <DialogDescription>
-            Make changes to your profile here. Click save when you're done.
-          </DialogDescription>
+          <DialogDescription/>
         </DialogHeader>
 
         <form @submit="onWorldSubmit" class="flex flex-col gap-4">
           <FormField v-slot="{ field }" name="name">
-            <FormItem>
+            <FormItem class="flex flex-col justify-center">
               <FormLabel>World Name</FormLabel>
               <FormControl>
                 <Input placeholder="World Name" v-bind="field" class="col-span-3 input" />
@@ -108,11 +129,11 @@ onBeforeMount(async () => {
             </FormItem>
           </FormField>
 
-          <FormField v-slot="{ field }" name="hostname">
-            <FormItem>
+          <FormField v-slot="{ field }" mode="lazy" name="hostname">
+            <FormItem class="flex flex-col justify-center">
               <FormLabel>Hostname</FormLabel>
               <FormControl>
-                <Input placeholder="Hostname" v-bind="field" class="col-span-3 input" />
+                <Input placeholder="Hostname" v-bind="field"  class="col-span-3 input" />
               </FormControl>
               <FormDescription>
                 This world will be available at {{field.value ?? "hostname"}}.{{server.info.world.hostname}}
@@ -122,7 +143,7 @@ onBeforeMount(async () => {
           </FormField>
 
           <FormField v-slot="{ field }" name="memory">
-            <FormItem>
+            <FormItem class="flex flex-col justify-center">
               <FormLabel>Allocated Memory</FormLabel>
               <FormControl>
                 <Slider
@@ -142,14 +163,66 @@ onBeforeMount(async () => {
           </FormField>
 
 
-          <FormField name="version_">
-            <FormItem>
+          <FormField name="mod_loader">
+            <FormItem class="flex flex-col justify-center">
+              <FormLabel>Loader</FormLabel>
+              <FormControl>
+                <Combobox v-model="selected_loader" by="label">
+                  <ComboboxAnchor as-child>
+                    <ComboboxTrigger as-child>
+                      <Button variant="outline" class="justify-between">
+                        {{ selected_loader?.name ?? 'Select a loader' }}
+
+                        <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </ComboboxTrigger>
+                  </ComboboxAnchor>
+
+                  <ComboboxList>
+                    <div class="relative w-full max-w-sm items-center">
+                      <ComboboxInput class="pl-9 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Select framework..." />
+                      <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+                      <Search class="size-4 text-muted-foreground" />
+                      </span>
+                    </div>
+
+                    <ComboboxEmpty>
+                      No framework found.
+                    </ComboboxEmpty>
+
+                    <ComboboxGroup>
+                      <ComboboxItem
+                        v-for="loader in mod_loaders"
+                        :key="loader.name"
+                        :value="loader"
+                        @select="async() => {
+                          world_form.resetField('version_id')
+                          selected_verison = undefined
+                          search_value = undefined
+                          versions = await api.get(`versions?mod_loader_id=${loader.id}`)
+                        }"
+                      >
+                        {{ loader.name }}
+                        <ComboboxItemIndicator>
+                          <Check :class="cn('ml-auto h-4 w-4')" />
+                        </ComboboxItemIndicator>
+                      </ComboboxItem>
+                    </ComboboxGroup>
+                  </ComboboxList>
+                </Combobox>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+
+          <FormField name="version_id" v-if="versions.length > 0 ">
+            <FormItem class="flex flex-col justify-center">
               <FormLabel>Minecraft Version</FormLabel>
               <FormControl>
                 <Combobox by="label">
                   <ComboboxAnchor>
                     <div class="relative w-full items-center">
-                      <ComboboxInput class="pl-9" :display-value="(val) => val?.minecraft_version ?? ''" placeholder="Search" />
+                      <ComboboxInput class="pl-9" v-model="search_value" :display-value="(val) => val?.minecraft_version ?? ''" placeholder="Search" />
                       <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
                       <Search class="size-4 text-muted-foreground" />
                       </span>
@@ -164,10 +237,12 @@ onBeforeMount(async () => {
                     <ComboboxGroup>
                       <ComboboxItem
                         v-for="version in versions"
+                        v-model="selected_verison"
                         :key="version.minecraft_version"
                         :value="version"
                         @select="() => {
                           world_form.setFieldValue('version_id', version.id)
+                          search_value = version.minecraft_version
                         }"
                       >
                         {{ version.minecraft_version }}

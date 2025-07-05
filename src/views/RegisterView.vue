@@ -6,6 +6,7 @@ import { onBeforeMount, ref } from 'vue'
 import InfoBoxComponent from '@/components/InfoBoxComponent.vue'
 import { mande } from 'mande'
 import { useRoute } from 'vue-router'
+import type { IsValid } from '@/lib/types.ts'
 
 const user_data = useUserStore();
 const server_data = useServerDataStore();
@@ -22,9 +23,6 @@ if (!server_data.info.requires_invite)
 token = null;
 
 const token_valid = ref( true)
-interface IsValid {
-  valid: boolean
-}
 
 
 onBeforeMount(async () => {
@@ -73,17 +71,15 @@ async function register(data: any, node: any) {
   }
 }
 
-const username_exists = async function ( { value }: any ) {
-  console.log(value)
+const username_valid = async function ({ value }: any ) {
   const response: IsValid = await api.get(`valid/username/${value}`)
-  console.log(response)
 
   return response.valid;
 }
 
-username_exists.blocking = false;
-username_exists.debounce = 300;
-username_exists.skipEmpty = true;
+username_valid.blocking = false;
+username_valid.debounce = 300;
+username_valid.skipEmpty = true;
 
 </script>
 
@@ -112,7 +108,7 @@ username_exists.skipEmpty = true;
         <FormKit
           type="text"
           name="username"
-          :validation-rules="{ username_exists }"
+          :validation-rules="{ username_exists:username_valid }"
           placeholder="Username"
           validation="required:trim|username_exists"
           :validation-messages="{

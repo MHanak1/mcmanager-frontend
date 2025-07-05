@@ -3,6 +3,7 @@ import MainView from '../views/MainView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import WorldsView from '@/views/WorldsView.vue'
+import WorldView from "@/views/world/WorldView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,10 @@ const router = createRouter({
         {
           path: '',
           component: WorldsView,
+        },
+        {
+          path: '/worlds/:id',
+          component: WorldView,
         }
       ]
     },
