@@ -188,7 +188,7 @@ onBeforeMount(async () => {
               Start World
             </Button>
           </div>
-          <p class="lg:text-lg">{{world.hostname}}.{{server.info.world.hostname}}{{server.info.world.port != 25565 ? '' : ':' + server.info.world.port}}</p>
+          <p class="lg:text-lg">{{world.hostname}}.{{server.info.world.hostname}}{{server.info.world.port == 25565 ? '' : ':' + server.info.world.port}}</p>
         </div>
       <hr/>
       <p class="text-2xl lg:text-4xl font-bold mb-1">Update World Settings</p>
