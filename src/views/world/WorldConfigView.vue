@@ -16,6 +16,7 @@ let field_config = {} as any
 let keys = []
 
 const bool_vals = [
+  'accepts-transfers',
   'enable-jmx-monitoring',
   'enable-command-block',
   'enable-query',
@@ -72,7 +73,7 @@ keys.forEach((key) => {
     schema[key.valueOf()] = z.boolean().default(config[key] === 'true')
 
     field_config[key] = {
-      label: capitalizeFirstLetter(key.replace("-", " ")),
+      label: capitalizeFirstLetter(key.replaceAll("-", " ").replaceAll(".", " ")),
       component: 'switch',
     }
   } else if (int_vals.includes(key)) {
@@ -92,7 +93,7 @@ keys.forEach((key) => {
     schema[key.valueOf()] = val.default(parseInt(config[key]))
 
     field_config[key] = {
-      label: capitalizeFirstLetter(key.replace("-", " ")),
+      label: capitalizeFirstLetter(key.replaceAll("-", " ").replaceAll(".", " ")),
     }
   } else {
     let val: any = z.string()
@@ -109,7 +110,7 @@ keys.forEach((key) => {
 
 
     field_config[key] = {
-      label: capitalizeFirstLetter(key.replace("-", " ")),
+      label: capitalizeFirstLetter(key.replaceAll('-', " ").replaceAll(".", " ")),
     }
   }
 })

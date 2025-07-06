@@ -12,6 +12,6 @@
     "checkJs": false,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
   }
 }
