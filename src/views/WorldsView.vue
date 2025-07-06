@@ -16,8 +16,9 @@ import {
 import { Combobox, ComboboxTrigger, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '@/components/ui/combobox'
 import {cn} from "@/lib/utils.ts";
 import { Check, Search, ChevronsUpDown } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 
-import * as z from 'zod'
+import  z from 'zod'
 
 import {
   FormControl,
@@ -35,7 +36,7 @@ import {Slider} from "@/components/ui/slider";
 import { Icon } from '@iconify/vue';
 
 import {useUserStore} from "@/stores/user.ts";
-import {useForm, Field} from "vee-validate";
+import {useForm} from "vee-validate";
 import { UseImage } from "@vueuse/components";
 import {toTypedSchema} from "@vee-validate/zod";
 
@@ -57,7 +58,7 @@ const worldFormSchema = toTypedSchema(z.object({
   //username: z.string().min(2).max(50),
   name: z.string().min(1).max(255),
   hostname: z.string().min(2).max(255).regex(/^[a-z0-9]+$/, "The hostname can contain only lowercase letters and numbers"),
-  memory: z.any(),
+  allocated_memory: z.any(),
   version_id: z.string()
 }))
 
@@ -84,14 +85,27 @@ const onWorldSubmit = world_form.handleSubmit(async (values: any) => {
 
 
 onBeforeMount(async () => {
-  worlds.value = await api.get(`worlds?owner_id=${user.user.id}`) as World[]
-  mod_loaders.value = await api.get('mod_loaders') as ModLoader[]
-  //versions.value = await api.get('versions')
+  try {
+    await Promise.all([
+      api.get(`worlds?owner_id=${user.user.id}`),
+      api.get('mod_loaders'),
+    ]).then(result => {
+      worlds.value = result[0] as World[]
+      mod_loaders.value = result[1] as ModLoader[]
+    })
+  }
+  catch (error: any) {
+      console.log(error)
+      toast.error('Error Loading Page', {
+        description: `${error.message}`,
+      })
+      throw error
+    }
 });
 </script>
 
 <template>
-  <div class="grid300 gap-4 p-4">
+  <div class="grid300 gap-4 p-4 overflow-y-auto">
     <router-link :to=" '/worlds/'+world.id" v-for="world in worlds" v-bind:key="world.id">
       <ImageCard :class="world.enabled ? '' : 'grayscale bg-muted'" :title="world.name" :description="world.hostname">
         <UseImage :src="`/api/worlds/${world.id}/icon`" class="rounded-md w-full aspect-square">
@@ -142,7 +156,7 @@ onBeforeMount(async () => {
             </FormItem>
           </FormField>
 
-          <FormField v-slot="{ field }" name="memory">
+          <FormField v-slot="{ field }" name="allocated_memory">
             <FormItem class="flex flex-col justify-center">
               <FormLabel>Allocated Memory</FormLabel>
               <FormControl>

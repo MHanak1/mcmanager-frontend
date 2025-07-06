@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { mande } from 'mande'
-import {onBeforeMount, ref} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import type { IsValid, ModLoader, Version, World, WorldStatus } from '@/lib/types.ts'
 import {useUserStore} from "@/stores/user.ts";
 import {useServerDataStore} from "@/stores/server.ts";
@@ -34,19 +34,20 @@ import { useForm } from 'vee-validate'
 import { toast } from 'vue-sonner'
 import { Icon } from '@iconify/vue'
 import { CgSpinner } from 'vue-icons-plus/cg'
+import WorldConfigView from '@/views/world/WorldConfigView.vue'
 
 
 const api = mande("/api")
 const user = useUserStore()
 const server = useServerDataStore()
 const route = useRoute()
-const id = route.params.id
 
 const data_loaded = ref(false)
 const world = ref({} as World)
 const world_status = ref({} as WorldStatus)
 const version = ref({} as Version)
 const loader = ref({} as ModLoader)
+const config = ref({} as unknown)
 
 const max_memory = ref(8196)
 const remaining_memory = ref(null as number | null)
@@ -80,7 +81,7 @@ const onWorldUpdate = world_form.handleSubmit(async (values: any) => {
     }
     catch (error: any) {
       console.log(error)
-      toast.error('Error Updating World', {
+      toast.error('error updating world', {
         description: `${error.message}`,
       })
       throw error
@@ -96,7 +97,12 @@ async function updateWorldStatus(enabled: boolean) {
     world_operation_running.value = true
     try {
       world.value = await api.patch(`/worlds/${world.value.id}`, {enabled: enabled})
-      world_status.value = await api.get(`worlds/${id}/status`) as WorldStatus
+      world_status.value = await api.get(`worlds/${world.value.id}/status`) as WorldStatus
+      if (enabled) {
+        toast.success("World Started", {
+          description: `In a moment you will be able to connect to ${world.value.name}`,
+        })
+      }
     }
     catch (error: any) {
       console.log(error)
@@ -110,9 +116,19 @@ async function updateWorldStatus(enabled: boolean) {
   }
 }
 
-onBeforeMount(async () => {
+watch(() => route.params.id, (id) => fetchData(id as string), { immediate: true })
+
+async function fetchData(id: string) {
   try {
-    world.value = await api.get(`worlds/${id}`) as World
+    await Promise.all([
+      api.get(`worlds/${id}`),
+      api.get(`worlds/${id}/status`),
+      api.get(`worlds/${id}/config`),
+    ]).then((values) => {
+      world.value = values[0] as World
+      world_status.value = values[1] as WorldStatus
+      config.value = values[2]
+    })
     version.value = await api.get(`versions/${world.value.version_id}`) as Version
     loader.value = await api.get(`mod_loaders/${version.value.mod_loader_id}`) as ModLoader
   }
@@ -140,28 +156,14 @@ onBeforeMount(async () => {
   world_form.setFieldValue('hostname', world.value.hostname)
   world_form.setFieldValue('allocated_memory', world.value.allocated_memory)
   data_loaded.value = true
-
-  // this does not to be loaded before display
-  try {
-    world_status.value = await api.get(`worlds/${id}/status`) as WorldStatus
-    console.log(world_status.value)
-  }
-  catch (error: any) {
-    console.log(error)
-    toast.error('Error Loading World Status', {
-      description: `${error.message}`,
-    })
-    throw error
-  }
-});
-
+}
 
 </script>
 
 
 <template>
-  <div class="flex flex-1 flex-col sm:flex-row " v-if="data_loaded">
-    <div class="w-full min-w-[20rem] sm:max-w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 overflow-y-auto">
+  <div class="flex flex-1 flex-col sm:flex-row overflow-y-auto" v-if="data_loaded">
+    <div class="w-full min-w-[20rem] sm:max-w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 sm:overflow-y-auto">
       <UseImage :src="`/api/worlds/${world.id}/icon`" class="rounded-md w-full aspect-square">
         <template #error>
           <img src="@/assets/world_default.png" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
@@ -248,8 +250,18 @@ onBeforeMount(async () => {
       </form>
 
     </div>
-    <div class="col-span-2 h-full">
-      {{world}}
+
+
+    <div class="col-span-2 h-full w-full p-4 flex flex-col xl:flex-row sm:overflow-y-auto">
+      <div class="flex flex-col gap-4 xl:flex-2 xl:overflow-y-auto">
+        <p class="text-4xl">World Config</p>
+        <WorldConfigView :config="config" :id="world.id" />
+      </div>
+
+      <div class="flex flex-col gap-4 xl:flex-3 xl:overflow-y-auto">
+        <p class="text-4xl">Mods</p>
+        this is work in progress
+      </div>
     </div>
   </div>
 

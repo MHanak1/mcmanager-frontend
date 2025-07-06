@@ -2,20 +2,19 @@
 import { RouterView } from 'vue-router'
 import { useUserStore } from '@/stores/user.ts'
 import { useServerDataStore } from '@/stores/server.ts'
-import { onBeforeMount } from 'vue'
 import router from '@/router'
 
 const user_data = useUserStore()
 const server_data = useServerDataStore()
 
-onBeforeMount(async () => {
+router.beforeEach(async () => {
   try {
     await server_data.refreshServerDataIfNeeded()
   } catch (error) {
     console.error(error)
     // if connection to the API server fails, go to /login to display the message about it
     if (!window.location.href.includes("login")) {
-      router.replace("/login")
+      await router.replace("/login")
     }
   }
   try {
@@ -23,7 +22,7 @@ onBeforeMount(async () => {
   } catch (error) {
     console.error(error)
     if (!window.location.href.includes("login") && !window.location.href.includes("register")) {
-      router.replace("/login")
+      await router.replace("/login")
     }
   }
 });
