@@ -6,16 +6,17 @@ import {useUserStore} from "@/stores/user.ts";
 import {useServerDataStore} from "@/stores/server.ts";
 import {useRoute} from "vue-router";
 import {UseImage } from '@vueuse/components'
-import { cn } from '@/lib/utils.ts'
 import {
-  Combobox,
-  ComboboxAnchor, ComboboxEmpty,
-  ComboboxGroup, ComboboxInput,
-  ComboboxItem, ComboboxItemIndicator,
-  ComboboxList,
-  ComboboxTrigger
-} from '@/components/ui/combobox'
-import { Check, ChevronsUpDown, Search } from 'lucide-vue-next'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import {
   FormControl,
   FormDescription,
@@ -35,6 +36,7 @@ import { toast } from 'vue-sonner'
 import { Icon } from '@iconify/vue'
 import { CgSpinner } from 'vue-icons-plus/cg'
 import WorldConfigView from '@/views/world/WorldConfigView.vue'
+import router from '@/router'
 
 
 const api = mande("/api")
@@ -242,24 +244,60 @@ async function fetchData(id: string) {
 
 
         <DialogFooter>
-          <Button type="submit">
+          <Button type="submit" class="w-full">
             Update Settings
           </Button>
         </DialogFooter>
 
       </form>
 
+      <p class="text-2xl lg:text-4xl font-bold mb-1">Danger Zone</p>
+      <AlertDialog>
+        <AlertDialogTrigger>
+          <Button variant="destructive" class="w-full">
+            Delete World
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              When you delete this world <b>all of its data will be irreversibly lost</b>.
+              Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel as="a">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction as="a" @click="async () => {
+              try {
+                await api.delete(`worlds/${world.id}`)
+                await router.push(`/`)
+                toast.success('World deleted successfully.')
+              } catch (e: any) {
+                toast.error('could not delete world', {
+                  description: e.message,
+                })
+              }
+            }">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
 
 
     <div class="col-span-2 h-full w-full p-4 flex flex-col xl:flex-row sm:overflow-y-auto">
       <div class="flex flex-col gap-4 xl:flex-2 xl:overflow-y-auto">
-        <p class="text-4xl">World Config</p>
+        <p class="text-2xl lg:text-4xl font-bold mb-1">Server Config</p>
         <WorldConfigView :config="config" :id="world.id" />
       </div>
 
       <div class="flex flex-col gap-4 xl:flex-3 xl:overflow-y-auto">
-        <p class="text-4xl">Mods</p>
+        <p class="text-2xl lg:text-4xl font-bold mb-1">Mods</p>
         this is work in progress
       </div>
     </div>

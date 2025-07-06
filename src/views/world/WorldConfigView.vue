@@ -79,10 +79,14 @@ keys.forEach((key) => {
     let val = z.number()
     if (user.group.config_limits[key] !== undefined) {
       const limit = user.group.config_limits[key] as string
-      if (limit.startsWith('<')) {
-        val = val.max(parseInt(limit.substring(1)))
-      } else if (limit.startsWith('>')) {
-        val = val.min(parseInt(limit.substring(1)))
+      try {
+        if (limit.startsWith('<')) {
+          val = val.max(parseInt(limit.substring(1)))
+        } else if (limit.startsWith('>')) {
+          val = val.min(parseInt(limit.substring(1)))
+        }
+      } catch (e) {
+        toast("There was en error processing server's config limits")
       }
     }
     schema[key.valueOf()] = val.default(parseInt(config[key]))
@@ -91,7 +95,18 @@ keys.forEach((key) => {
       label: capitalizeFirstLetter(key.replace("-", " ")),
     }
   } else {
-    schema[key.valueOf()] = z.string().default(config[key])
+    let val: any = z.string()
+
+    if (user.group.config_limits[key] !== undefined) {
+      const limit = user.group.config_limits[key] as string
+      if (!limit.startsWith('<') && !limit.startsWith('>')) {
+        const whitelist = limit.split("|")
+        val = z.enum([whitelist[0], ...whitelist.slice(1, whitelist.length)])
+      }
+    }
+
+    schema[key.valueOf()] = val.default(config[key])
+
 
     field_config[key] = {
       label: capitalizeFirstLetter(key.replace("-", " ")),
