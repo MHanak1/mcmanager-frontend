@@ -21,7 +21,7 @@ export const useServerDataStore = defineStore('server', {
   },
   actions: {
     async refreshServerData() {
-      this.info = await api.get("info")
+      this.info = await api.get("server")
       this.initialised = true
       console.log("Refreshed server data");
     },

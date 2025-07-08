@@ -18,7 +18,7 @@ export const useUserStore = defineStore('user', {
   actions: {
     async refreshUserData() {
       try {
-        this.user = await api.get("user");
+        this.user = await api.get("session/user");
         this.group = await api.get(`groups/${this.user?.group_id}`);
         this.logged_in = true;
         this.initialised = true;
@@ -37,20 +37,20 @@ export const useUserStore = defineStore('user', {
       }
     },
     async login(username: string, password: string) {
-      await api.post(`login`, {username: username, password: password})
+      await api.post(`session`, {username: username, password: password})
       await this.refreshUserData()
     },
     async register(username: string, password: string, token: string | null) {
       if (token == null) {
-        await api.post(`register`, {username: username, password: password})
+        await api.post(`session/user`, {username: username, password: password})
       } else {
-        await api.post(`register?token=${token}`, {username: username, password: password})
+        await api.post(`session/user?token=${token}`, {username: username, password: password})
       }
       await this.login(username, password)
       await this.refreshUserData()
     },
     async logout() {
-      await api.post(`logout`)
+      await api.delete(`session`)
       this.user = {} as User
       this.group = {} as Group
       this.logged_in = false

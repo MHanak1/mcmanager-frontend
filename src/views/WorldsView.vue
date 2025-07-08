@@ -195,7 +195,7 @@ onBeforeMount(async () => {
                   <ComboboxList>
 
                     <ComboboxEmpty>
-                      No framework found.
+                      No mod loaders found
                     </ComboboxEmpty>
 
                     <ComboboxGroup>
@@ -211,9 +211,7 @@ onBeforeMount(async () => {
                         }"
                       >
                         {{ loader.name }}
-                        <ComboboxItemIndicator>
-                          <Check :class="cn('ml-auto h-4 w-4')" />
-                        </ComboboxItemIndicator>
+                        <ComboboxItemIndicator/>
                       </ComboboxItem>
                     </ComboboxGroup>
                   </ComboboxList>
@@ -239,7 +237,7 @@ onBeforeMount(async () => {
 
                   <ComboboxList>
                     <ComboboxEmpty>
-                      No framework found.
+                      No versions found
                     </ComboboxEmpty>
 
                     <ComboboxGroup>
@@ -255,9 +253,7 @@ onBeforeMount(async () => {
                       >
                         {{ version.minecraft_version }}
 
-                        <ComboboxItemIndicator>
-                          <Check :class="cn('ml-auto h-4 w-4')" />
-                        </ComboboxItemIndicator>
+                        <ComboboxItemIndicator/>
                       </ComboboxItem>
                     </ComboboxGroup>
                   </ComboboxList>
