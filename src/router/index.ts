@@ -15,6 +15,7 @@ const router = createRouter({
         {
           path: '',
           component: WorldsView,
+          meta: { title: "Home" }
         },
         {
           path: '/worlds/:id',
@@ -25,10 +26,12 @@ const router = createRouter({
     {
       path: '/login',
       component: LoginView,
+      meta: { title: "Login" }
     },
     {
       path: '/register',
       component: RegisterView,
+      meta: { title: "Register" }
     },
   ],
 })

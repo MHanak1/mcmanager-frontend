@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { mande } from 'mande'
-import {onBeforeMount, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import type { IsValid, ModLoader, Version, World, WorldStatus } from '@/lib/types.ts'
 import {useUserStore} from "@/stores/user.ts";
 import {useServerDataStore} from "@/stores/server.ts";
 import {useRoute} from "vue-router";
-import {UseImage } from '@vueuse/components'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +36,7 @@ import { Icon } from '@iconify/vue'
 import { CgSpinner } from 'vue-icons-plus/cg'
 import WorldConfigView from '@/views/world/WorldConfigView.vue'
 import router from '@/router'
+import ImageUpload from '@/components/ImageUpload.vue'
 
 
 const api = mande("/api")
@@ -142,12 +142,16 @@ async function fetchData(id: string) {
     throw error
   }
 
-  const other_worlds = await api.get(`worlds?enabled=true&id=!${world.value.id}`) as World[]
-  let remaining = user.group.total_memory_limit as number
-  for (const other_world of other_worlds) {
-    other_enabled_world_count.value += 1
-    remaining -= other_world.allocated_memory
+  document.title = `${world.value.name} | ${server.info.name || "MCManager"}`;
+
+  let memory_usage = user.user.total_memory_usage
+
+  if (world.value.enabled) {
+    memory_usage -= world.value.allocated_memory
   }
+
+  const remaining = user.group.total_memory_limit as number - memory_usage
+
   if (user.group.total_memory_limit != null) {
     remaining_memory.value = remaining
   }
@@ -158,6 +162,8 @@ async function fetchData(id: string) {
   world_form.setFieldValue('hostname', world.value.hostname)
   world_form.setFieldValue('allocated_memory', world.value.allocated_memory)
   data_loaded.value = true
+
+  const other_worlds = await api.get(`worlds?enabled=true&id=!${world.value.id}`) as World[]
 }
 
 </script>
@@ -166,35 +172,34 @@ async function fetchData(id: string) {
 <template>
   <div class="flex flex-1 flex-col sm:flex-row overflow-y-auto" v-if="data_loaded">
     <div class="w-full min-w-[20rem] sm:max-w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 sm:overflow-y-auto">
-      <UseImage :src="`/api/worlds/${world.id}/icon`" class="rounded-md w-full aspect-square">
-        <template #error>
-          <img src="@/assets/world_default.png" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
-        </template>
-      </UseImage>
-        <div>
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">{{world.name}}</p>
-              <p class="lg:text-lg">{{loader.name}} {{version.minecraft_version}}</p>
-            </div>
-            <Button v-if="world_status.status === 'running'" variant="destructive" @click="updateWorldStatus(false)">
-              <CgSpinner v-if="world_operation_running" class="animate-spin" />
-              <Icon v-else icon="radix-icons:stop"/>
-              Stop World
-            </Button>
-            <Button v-else-if="other_enabled_world_count < (user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
-              <CgSpinner v-if="world_operation_running" class="animate-spin"/>
-              <Icon v-else icon="radix-icons:play"/>
-              Start World
-            </Button>
-            <Button v-else disabled>
-              <Icon icon="radix-icons:play"/>
-              Start World
-            </Button>
+      <ImageUpload :icon_src="`/api/worlds/${world.id}/icon`" :icon_id="world.id" error_src="/src/assets/world_default.png"/>
+
+      <div>
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">{{world.name}}</p>
+            <p class="lg:text-lg">{{loader.name}} {{version.minecraft_version}}</p>
           </div>
-          <p class="lg:text-lg">{{world.hostname}}.{{server.info.world.hostname}}{{server.info.world.port == 25565 ? '' : ':' + server.info.world.port}}</p>
+          <Button v-if="world_status.status === 'running'" variant="destructive" @click="updateWorldStatus(false)">
+            <CgSpinner v-if="world_operation_running" class="animate-spin" />
+            <Icon v-else icon="radix-icons:stop"/>
+            Stop World
+          </Button>
+          <Button v-else-if="other_enabled_world_count < (user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
+            <CgSpinner v-if="world_operation_running" class="animate-spin"/>
+            <Icon v-else icon="radix-icons:play"/>
+            Start World
+          </Button>
+          <Button v-else disabled>
+            <Icon icon="radix-icons:play"/>
+            Start World
+          </Button>
         </div>
+        <p class="lg:text-lg">{{world.hostname}}.{{server.info.world.hostname}}{{server.info.world.port == 25565 ? '' : ':' + server.info.world.port}}</p>
+      </div>
+
       <hr/>
+
       <p class="text-2xl lg:text-4xl font-bold mb-1">Update World Settings</p>
 
       <form @submit="onWorldUpdate" class="flex flex-col gap-4">

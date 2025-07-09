@@ -39,10 +39,12 @@ import {useUserStore} from "@/stores/user.ts";
 import {useForm} from "vee-validate";
 import { UseImage } from "@vueuse/components";
 import {toTypedSchema} from "@vee-validate/zod";
+import { useImageCaches } from '@/stores/image_caches.ts'
 
 const api = mande("/api")
 const user = useUserStore()
 const server = useServerDataStore()
+const image_caches = useImageCaches()
 
 const worlds = ref([] as World[])
 const mod_loaders = ref([] as ModLoader[])
@@ -108,7 +110,7 @@ onBeforeMount(async () => {
   <div class="grid300 gap-4 p-4 overflow-y-auto">
     <router-link :to=" '/worlds/'+world.id" v-for="world in worlds" v-bind:key="world.id">
       <ImageCard :class="world.enabled ? '' : 'grayscale bg-muted'" :title="world.name" :description="world.hostname">
-        <UseImage :src="`/api/worlds/${world.id}/icon`" class="rounded-md w-full aspect-square">
+        <UseImage :src="`/api/worlds/${world.id}/icon?rnd=${image_caches.get(world.id)}`" class="rounded-md w-full aspect-square">
           <template #error>
             <img src="@/assets/world_default.png" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
           </template>
@@ -270,72 +272,6 @@ onBeforeMount(async () => {
           </DialogFooter>
 
         </form>
-
-        <!--
-                <form class="w-2/3 space-y-6" @submit="onSubmit">
-
-                  <Input id="hostname" placeholder="Hostname" v-model="hostname" class="col-span-3 input" />
-
-                 the server will be avaliable at <span class="bg-ring">{{ hostname || "hostname" }}.{{server.info.world.hostname}}</span>
-
-          <Slider
-          />
-        </form>
--->
-        <!--
-
-        <FormKit
-          type="form"
-          submit-label="Log In"
-          :incomplete-message=false
-          :config="{
-          classes: {
-            form: 'flex flex-col gap-4 items-center w-full',
-            outer: 'w-full',
-            label: 'text-lg',
-            input: 'input w-full my-2',
-            message: 'text-muted-foreground text-sm'
-          },
-        }"
-          @submit="login"
-        >
-
-        <FormKit
-          type="text"
-          label="World Name"
-          name="world_name"
-          id="world_name"
-          validation="required:trim"
-        />
-
-        <FormKit
-          type="text"
-          label="Hostname"
-          name="hostname"
-          id="hostname"
-          validation="required:trim"
-        />
-
-        <FormKit
-          type="range"
-          v-model="allocated_memory"
-          :label="'Allocated Memory: ' + allocated_memory + 'MiB'"
-          :min="server.info.world.min_memory"
-          :value="server.info.world.default_memory"
-          :max="user.group.per_world_memory_limit ?? 8196"
-          number="integer"
-          name="memory"
-          id="memory"
-          step="128"
-        />
-
-          <FormKit
-            type="dropdown"
-          />
-
-        </FormKit>
-        -->
-
       </DialogContent>
     </Dialog>
 

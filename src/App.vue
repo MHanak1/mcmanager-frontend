@@ -7,7 +7,13 @@ import router from '@/router'
 const user_data = useUserStore()
 const server_data = useServerDataStore()
 
-router.beforeEach(async () => {
+router.beforeEach(async (to, from) => {
+  if (to.meta.title) {
+    document.title = `${to.meta.title} | ${server_data.info.name || "MCManager"}`;
+  } else {
+    document.title = server_data.info.name || "MCManager"
+  }
+
   try {
     await server_data.refreshServerDataIfNeeded()
   } catch (error) {

@@ -20,6 +20,7 @@ export interface User {
   username: string;
   avatar_id: Id | null;
   group_id: Id;
+  total_memory_usage: number;
   enabled: boolean;
 }
 
