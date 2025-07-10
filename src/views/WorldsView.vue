@@ -69,6 +69,10 @@ const world_form = useForm({
   }
 )
 
+const props = defineProps<{
+  show_all?: boolean
+}>()
+
 async function validateHostname(hostname: any) {
   const response: IsValid = await api.get(`/valid/hostname/${hostname}`)
   return response.valid;
@@ -77,7 +81,7 @@ async function validateHostname(hostname: any) {
 const onWorldSubmit = world_form.handleSubmit(async (values: any) => {
   if (await validateHostname(values.hostname)) {
     await api.post("/worlds", values)
-    worlds.value = await api.get(`worlds?owner_id=${user.user.id}`) as World[]
+    worlds.value = await api.get(props.show_all ? 'worlds' : `worlds?owner_id=${user.user.id}`) as World[]
     dialog_open.value = false
   } else {
     world_form.setFieldError("hostname", "Hostname is already taken")
@@ -89,7 +93,7 @@ const onWorldSubmit = world_form.handleSubmit(async (values: any) => {
 onBeforeMount(async () => {
   try {
     await Promise.all([
-      api.get(`worlds?owner_id=${user.user.id}`),
+      api.get(props.show_all ? 'worlds' : `worlds?owner_id=${user.user.id}`),
       api.get('mod_loaders'),
     ]).then(result => {
       worlds.value = result[0] as World[]
@@ -119,7 +123,7 @@ onBeforeMount(async () => {
     </router-link>
 
 
-    <Dialog v-if="(user.group.world_limit ?? 1000000) > worlds.length" v-model:open="dialog_open" onopen="">
+    <Dialog v-if="(user.user.group.world_limit ?? 1000000) > worlds.length" v-model:open="dialog_open" onopen="">
       <DialogTrigger>
         <ImageCard title="New" description="Create new world">
           <div class="rounded-md w-full aspect-square flex items-center justify-center text-muted-foreground">
@@ -166,7 +170,7 @@ onBeforeMount(async () => {
                   v-bind="field"
                   :default-value="[server.info.world.default_memory]"
                   :min="server.info.world.min_memory"
-                  :max="user.group.per_world_memory_limit ?? 8196"
+                  :max="user.user.group.per_world_memory_limit ?? 8196"
                   :step="128"
                   name="Allocated Memory"
                 />

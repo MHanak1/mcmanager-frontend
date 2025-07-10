@@ -24,6 +24,15 @@ export interface User {
   enabled: boolean;
 }
 
+export interface UserRecursive {
+  id: Id;
+  username: string;
+  avatar_id: Id | null;
+  group: Group;
+  total_memory_usage: number;
+  enabled: boolean;
+}
+
 export interface Group {
   id: Id,
   name: string;
@@ -45,6 +54,13 @@ export interface Session {
   expired: boolean
 }
 
+export interface SessionRecursive {
+  id: Id,
+  user : User,
+  created: Date
+  expired: boolean
+}
+
 export interface ModLoader {
   id: Id,
   name: string,
@@ -57,6 +73,12 @@ export interface Version {
   mod_loader_id: Id,
 }
 
+export interface VersionRecursive {
+  id: Id,
+  minecraft_version: string,
+  mod_loader: ModLoader,
+}
+
 export interface World {
   id: Id,
   owner_id: Id,
@@ -64,6 +86,16 @@ export interface World {
   hostname: string
   allocated_memory: number
   version_id: Id,
+  enabled: boolean
+}
+
+export interface WorldRecursive {
+  id: Id,
+  owner: UserRecursive,
+  name: string;
+  hostname: string
+  allocated_memory: number
+  version: VersionRecursive,
   enabled: boolean
 }
 

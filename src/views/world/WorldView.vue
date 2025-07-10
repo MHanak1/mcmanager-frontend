@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { mande } from 'mande'
 import {ref, watch} from "vue";
-import type { IsValid, ModLoader, Version, World, WorldStatus } from '@/lib/types.ts'
+import type { IsValid, World, WorldRecursive, WorldStatus } from '@/lib/types.ts'
 import {useUserStore} from "@/stores/user.ts";
 import {useServerDataStore} from "@/stores/server.ts";
 import {useRoute} from "vue-router";
@@ -45,10 +45,8 @@ const server = useServerDataStore()
 const route = useRoute()
 
 const data_loaded = ref(false)
-const world = ref({} as World)
+const world = ref({} as WorldRecursive)
 const world_status = ref({} as WorldStatus)
-const version = ref({} as Version)
-const loader = ref({} as ModLoader)
 const config = ref({} as unknown)
 
 const max_memory = ref(8196)
@@ -79,7 +77,7 @@ async function validateHostname(hostname: any) {
 const onWorldUpdate = world_form.handleSubmit(async (values: any) => {
   if (await validateHostname(values.hostname)) {
     try {
-    world.value = await api.patch(`/worlds/${world.value.id}`, values) as World
+    world.value = await api.patch(`/worlds/${world.value.id}?recursive=true`, values) as WorldRecursive
     }
     catch (error: any) {
       console.log(error)
@@ -123,16 +121,14 @@ watch(() => route.params.id, (id) => fetchData(id as string), { immediate: true 
 async function fetchData(id: string) {
   try {
     await Promise.all([
-      api.get(`worlds/${id}`),
+      api.get(`worlds/${id}?recursive=true`),
       api.get(`worlds/${id}/status`),
       api.get(`worlds/${id}/config`),
     ]).then((values) => {
-      world.value = values[0] as World
+      world.value = values[0] as WorldRecursive
       world_status.value = values[1] as WorldStatus
       config.value = values[2]
     })
-    version.value = await api.get(`versions/${world.value.version_id}`) as Version
-    loader.value = await api.get(`mod_loaders/${version.value.mod_loader_id}`) as ModLoader
   }
   catch (error: any) {
     console.log(error)
@@ -150,13 +146,13 @@ async function fetchData(id: string) {
     memory_usage -= world.value.allocated_memory
   }
 
-  const remaining = user.group.total_memory_limit as number - memory_usage
+  const remaining = user.user.group.total_memory_limit as number - memory_usage
 
-  if (user.group.total_memory_limit != null) {
+  if (user.user.group.total_memory_limit != null) {
     remaining_memory.value = remaining
   }
-  if (user.group.per_world_memory_limit != null) {
-    max_memory.value = user.group.per_world_memory_limit as number
+  if (user.user.group.per_world_memory_limit != null) {
+    max_memory.value = user.user.group.per_world_memory_limit as number
   }
   world_form.setFieldValue('name', world.value.name)
   world_form.setFieldValue('hostname', world.value.hostname)
@@ -164,6 +160,7 @@ async function fetchData(id: string) {
   data_loaded.value = true
 
   const other_worlds = await api.get(`worlds?enabled=true&id=!${world.value.id}`) as World[]
+  other_enabled_world_count.value = other_worlds.length
 }
 
 </script>
@@ -178,14 +175,14 @@ async function fetchData(id: string) {
         <div class="flex justify-between items-center">
           <div>
             <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">{{world.name}}</p>
-            <p class="lg:text-lg">{{loader.name}} {{version.minecraft_version}}</p>
+            <p class="lg:text-lg">{{world.version.mod_loader.name}} {{world.version.minecraft_version}}</p>
           </div>
           <Button v-if="world_status.status === 'running'" variant="destructive" @click="updateWorldStatus(false)">
             <CgSpinner v-if="world_operation_running" class="animate-spin" />
             <Icon v-else icon="radix-icons:stop"/>
             Stop World
           </Button>
-          <Button v-else-if="other_enabled_world_count < (user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
+          <Button v-else-if="other_enabled_world_count < (user.user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
             <CgSpinner v-if="world_operation_running" class="animate-spin"/>
             <Icon v-else icon="radix-icons:play"/>
             Start World

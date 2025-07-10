@@ -29,7 +29,7 @@ function handleError(error: any) {
 </script>
 
 <template>
-  <FileUpload :url="icon_src" file_name="icon" v-on:uploaded="image_caches.update(icon_id)" hover_text="Click to select an icon" v-on:error="handleError" >
+  <FileUpload :url="icon_src" file_name="file" v-on:uploaded="image_caches.update(icon_id)" hover_text="Click to select an icon" v-on:error="handleError" >
     <UseImage :src="icon_src + '?rnd=' + image_caches.get(icon_id)" class="rounded-md w-full aspect-square">
       <template #error>
         <img :src="error_src" width="1" height="1" class="rounded-md w-full aspect-square" alt="">

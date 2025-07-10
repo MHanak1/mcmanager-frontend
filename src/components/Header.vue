@@ -23,10 +23,14 @@ const mode = useColorMode()
 
 <template>
   <header class=" bg-popover flex flex-row gap-2 p-4 text-xl items-center justify-between shadow-md shadow-shadow">
-    <div class="flex items-center justify-start gap-4 font-bold">
+    <div class="flex items-center justify-start gap-4 ">
       <!--<img alt="App logo" class="h-8" src="../assets/icon.png"/>-->
-      <router-link to="/" class="text-2xl" >
+      <router-link to="/" class="text-2xl font-bold" >
         {{server_data.info.name}}
+      </router-link>
+
+      <router-link v-if="user_data.user.group.is_privileged" to="/admin" class="text-xl" >
+        Admin
       </router-link>
 
     </div>

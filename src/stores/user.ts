@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { mande } from 'mande'
-import type {Group, User} from "@/lib/types.ts";
+import type { Group, User, UserRecursive } from '@/lib/types.ts'
 
 const api = mande("/api")
 
@@ -8,9 +8,8 @@ export const useUserStore = defineStore('user', {
   state: () => {
     return {
       // for data that is not yet loaded
-      user: {} as User,
+      user: {} as UserRecursive,
       // for initially empty lists
-      group: {} as Group,
       logged_in: false,
       initialised: false,
     }
@@ -18,8 +17,7 @@ export const useUserStore = defineStore('user', {
   actions: {
     async refreshUserData() {
       try {
-        this.user = await api.get("session/user");
-        this.group = await api.get(`groups/${this.user?.group_id}`);
+        this.user = await api.get("session/user?recursive=true");
         this.logged_in = true;
         this.initialised = true;
         console.log("Refreshed user data");
@@ -51,8 +49,7 @@ export const useUserStore = defineStore('user', {
     },
     async logout() {
       await api.delete(`session`)
-      this.user = {} as User
-      this.group = {} as Group
+      this.user = {} as UserRecursive
       this.logged_in = false
       this.initialised = false
       window.location.href = '/login'

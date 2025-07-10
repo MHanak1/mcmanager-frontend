@@ -78,8 +78,8 @@ keys.forEach((key) => {
     }
   } else if (int_vals.includes(key)) {
     let val = z.number()
-    if (user.group.config_limits[key] !== undefined) {
-      const limit = user.group.config_limits[key] as string
+    if (user.user.group.config_limits[key] !== undefined) {
+      const limit = user.user.group.config_limits[key] as string
       try {
         if (limit.startsWith('<')) {
           val = val.max(parseInt(limit.substring(1)))
@@ -98,8 +98,8 @@ keys.forEach((key) => {
   } else {
     let val: any = z.string()
 
-    if (user.group.config_limits[key] !== undefined) {
-      const limit = user.group.config_limits[key] as string
+    if (user.user.group.config_limits[key] !== undefined) {
+      const limit = user.user.group.config_limits[key] as string
       if (!limit.startsWith('<') && !limit.startsWith('>')) {
         const whitelist = limit.split("|")
         val = z.enum([whitelist[0], ...whitelist.slice(1, whitelist.length)])

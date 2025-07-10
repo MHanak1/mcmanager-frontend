@@ -4,6 +4,8 @@ import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import WorldsView from '@/views/WorldsView.vue'
 import WorldView from "@/views/world/WorldView.vue";
+import AdminView from '@/views/admin/AdminView.vue'
+import AdminUsersView from '@/views/admin/AdminUsersView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,7 +22,28 @@ const router = createRouter({
         {
           path: '/worlds/:id',
           component: WorldView,
-        }
+        },
+      ]
+    },
+    {
+      path: '/admin',
+      component: AdminView,
+      children: [
+        {
+          path: '',
+          component: AdminUsersView,
+          meta: { title: "Users" }
+        },
+        {
+          path: 'users',
+          component: AdminUsersView,
+          meta: { title: "Users" }
+        },
+        {
+          path: 'worlds',
+          component: WorldsView,
+          meta: { title: "Worlds" }
+        },
       ]
     },
     {
