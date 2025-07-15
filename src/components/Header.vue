@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useServerDataStore } from '@/stores/server.ts'
 import { useUserStore } from '@/stores/user.ts'
+import { useImageCaches } from '@/stores/image_caches.ts'
 import {useColorMode} from "@vueuse/core";
 import {Avatar, AvatarImage, AvatarFallback} from "@/components/ui/avatar";
 import { Icon } from '@iconify/vue'
@@ -16,8 +17,10 @@ import {
 
 const server_data = useServerDataStore()
 const user_data = useUserStore()
+let image_caches = useImageCaches()
 
 const mode = useColorMode()
+
 
 </script>
 
@@ -56,13 +59,12 @@ const mode = useColorMode()
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar class="size-12 shadow-md shadow-shadow ">
-          <AvatarImage :src="`/api/users/${user_data.user.id}/icon`"/>
+          <AvatarImage :src="`/api/users/${user_data.user.id}/icon?rnd=${image_caches.get(user_data.user.id)}`"/>
           <AvatarFallback>
-            {{user_data.user.username[0].toUpperCase()}}
+            <img src="@/assets/user_default.png"/>
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>

@@ -6,6 +6,7 @@ import WorldsView from '@/views/WorldsView.vue'
 import WorldView from "@/views/world/WorldView.vue";
 import AdminView from '@/views/admin/AdminView.vue'
 import AdminUsersView from '@/views/admin/AdminUsersView.vue'
+import UserView from '@/views/user/UserView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,6 +46,11 @@ const router = createRouter({
           meta: { title: "Worlds" }
         },
       ]
+    },
+    {
+      path: '/profile',
+      component: UserView,
+      meta: { title: "Profile" }
     },
     {
       path: '/login',

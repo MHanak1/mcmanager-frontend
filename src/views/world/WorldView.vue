@@ -127,7 +127,7 @@ async function fetchData(id: string) {
     ]).then((values) => {
       world.value = values[0] as WorldRecursive
       world_status.value = values[1] as WorldStatus
-      config.value = values[2]
+      config.value = values[2] as Object
     })
   }
   catch (error: any) {
