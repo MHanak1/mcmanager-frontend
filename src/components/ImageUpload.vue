@@ -11,7 +11,6 @@ let image_caches = useImageCaches()
 defineProps<{
   icon_id: string
   icon_src: string,
-  error_src: string,
 }>();
 
 function handleError(error: any) {
@@ -32,7 +31,7 @@ function handleError(error: any) {
   <FileUpload :url="icon_src" file_name="file" v-on:uploaded="image_caches.update(icon_id)" hover_text="Click to select an icon" v-on:error="handleError" >
     <UseImage :src="icon_src + '?rnd=' + image_caches.get(icon_id)" class="rounded-md w-full aspect-square">
       <template #error>
-        <img :src="error_src" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
+        <slot name="error"></slot>
       </template>
     </UseImage>
   </FileUpload>

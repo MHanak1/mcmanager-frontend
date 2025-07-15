@@ -47,7 +47,7 @@ const route = useRoute()
 const data_loaded = ref(false)
 const world = ref({} as WorldRecursive)
 const world_status = ref({} as WorldStatus)
-const config = ref({} as unknown)
+const config = ref({} as Object)
 
 const max_memory = ref(8196)
 const remaining_memory = ref(null as number | null)
@@ -96,7 +96,7 @@ async function updateWorldStatus(enabled: boolean) {
   if (!world_operation_running.value) {
     world_operation_running.value = true
     try {
-      world.value = await api.patch(`/worlds/${world.value.id}`, {enabled: enabled})
+      world.value = await api.patch(`/worlds/${world.value.id}?recursive=true`, {enabled: enabled})
       world_status.value = await api.get(`worlds/${world.value.id}/status`) as WorldStatus
       if (enabled) {
         toast.success("World Started", {
@@ -169,7 +169,11 @@ async function fetchData(id: string) {
 <template>
   <div class="flex flex-1 flex-col sm:flex-row overflow-y-auto" v-if="data_loaded">
     <div class="w-full min-w-[20rem] sm:max-w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 sm:overflow-y-auto">
-      <ImageUpload :icon_src="`/api/worlds/${world.id}/icon`" :icon_id="world.id" error_src="/src/assets/world_default.png"/>
+      <ImageUpload :icon_src="`/api/worlds/${world.id}/icon`" :icon_id="world.id">
+        <template #error>
+          <img src="@/assets/world_default.png"/>
+        </template>
+      </ImageUpload>
 
       <div>
         <div class="flex justify-between items-center">
@@ -293,9 +297,14 @@ async function fetchData(id: string) {
 
 
     <div class="col-span-2 h-full w-full p-4 flex flex-col xl:flex-row sm:overflow-y-auto">
-      <div class="flex flex-col gap-4 xl:flex-2 xl:overflow-y-auto">
-        <p class="text-2xl lg:text-4xl font-bold mb-1">Server Config</p>
-        <WorldConfigView :config="config" :id="world.id" />
+      <div class="xl:flex-2 xl:overflow-y-auto">
+        <div v-if="Object.keys(config).length > 0" class="flex flex-col gap-4">
+          <p class="text-2xl lg:text-4xl mb-1">Server Config</p>
+          <WorldConfigView :config="config" :id="world.id" />
+        </div>
+        <div v-else>
+          <p class="text-xl lg:text-2xl font-bold mb-1">Start this server to generate config and refresh this page</p>
+        </div>
       </div>
 
       <div class="flex flex-col gap-4 xl:flex-3 xl:overflow-y-auto">

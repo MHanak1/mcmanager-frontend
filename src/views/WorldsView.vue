@@ -114,7 +114,7 @@ onBeforeMount(async () => {
   <div class="grid300 gap-4 p-4 overflow-y-auto">
     <router-link :to=" '/worlds/'+world.id" v-for="world in worlds" v-bind:key="world.id">
       <ImageCard :class="world.enabled ? '' : 'grayscale bg-muted'" :title="world.name" :description="world.hostname">
-        <UseImage :src="`/api/worlds/${world.id}/icon?rnd=${image_caches.get(world.id)}`" class="rounded-md w-full aspect-square">
+        <UseImage :src="`/api/worlds/${world.id}/icon?rnd=${image_caches.get(world.id)}`" class="rounded-md w-full aspect-square" >
           <template #error>
             <img src="@/assets/world_default.png" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
           </template>
