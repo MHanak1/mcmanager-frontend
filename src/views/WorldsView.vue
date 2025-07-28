@@ -2,7 +2,7 @@
 import { mande } from 'mande'
 import ImageCard from '@/components/ImageCard.vue'
 import { onBeforeMount, ref } from 'vue'
-import type {IsValid, ModLoader, Version, World} from '@/lib/types.ts'
+import type {IsValid, ModLoader, Version} from '@/lib/types.ts'
 import {useServerDataStore} from "@/stores/server.ts";
 import {
   Dialog,
@@ -14,8 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Combobox, ComboboxTrigger, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '@/components/ui/combobox'
-import {cn} from "@/lib/utils.ts";
-import { Check, Search, ChevronsUpDown } from 'lucide-vue-next'
+import {  Search, ChevronsUpDown } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 
 import  z from 'zod'
@@ -40,13 +39,23 @@ import {useForm} from "vee-validate";
 import { UseImage } from "@vueuse/components";
 import {toTypedSchema} from "@vee-validate/zod";
 import { useImageCaches } from '@/stores/image_caches.ts'
+import { useAllWorldsStore, useUserWorldsStore, type WorldsStore } from '@/stores/world.ts'
+
+const props = defineProps<{
+  show_all?: boolean
+}>()
 
 const api = mande("/api")
 const user = useUserStore()
 const server = useServerDataStore()
 const image_caches = useImageCaches()
 
-const worlds = ref([] as World[])
+let worlds_store = useUserWorldsStore() as WorldsStore
+
+if (props.show_all) {
+  worlds_store = useAllWorldsStore() as WorldsStore
+}
+
 const mod_loaders = ref([] as ModLoader[])
 const versions = ref([] as Version[])
 
@@ -69,9 +78,6 @@ const world_form = useForm({
   }
 )
 
-const props = defineProps<{
-  show_all?: boolean
-}>()
 
 async function validateHostname(hostname: any) {
   const response: IsValid = await api.get(`/valid/hostname/${hostname}`)
@@ -81,7 +87,7 @@ async function validateHostname(hostname: any) {
 const onWorldSubmit = world_form.handleSubmit(async (values: any) => {
   if (await validateHostname(values.hostname)) {
     await api.post("/worlds", values)
-    worlds.value = await api.get(props.show_all ? 'worlds' : `worlds?owner_id=${user.user.id}`) as World[]
+    await worlds_store.refreshAllWorlds()
     dialog_open.value = false
   } else {
     world_form.setFieldError("hostname", "Hostname is already taken")
@@ -93,10 +99,10 @@ const onWorldSubmit = world_form.handleSubmit(async (values: any) => {
 onBeforeMount(async () => {
   try {
     await Promise.all([
-      api.get(props.show_all ? 'worlds' : `worlds?owner_id=${user.user.id}`),
+      //api.get(props.show_all ? 'worlds' : `worlds?owner_id=${user.user.id}`),
+      worlds_store.refreshAllWorlds(),
       api.get('mod_loaders'),
     ]).then(result => {
-      worlds.value = result[0] as World[]
       mod_loaders.value = result[1] as ModLoader[]
     })
   }
@@ -112,18 +118,14 @@ onBeforeMount(async () => {
 
 <template>
   <div class="grid300 gap-4 p-4 overflow-y-auto">
-    <router-link :to=" '/worlds/'+world.id" v-for="world in worlds" v-bind:key="world.id">
+    <router-link :to=" '/worlds/'+world.id" v-for="world in worlds_store.worlds" v-bind:key="world.id">
       <ImageCard :class="world.enabled ? '' : 'grayscale bg-muted'" :title="world.name" :description="world.hostname">
-        <UseImage :src="`/api/worlds/${world.id}/icon?rnd=${image_caches.get(world.id)}`" class="rounded-md w-full aspect-square" >
-          <template #error>
-            <img src="@/assets/world_default.png" width="1" height="1" class="rounded-md w-full aspect-square" alt="">
-          </template>
-        </UseImage>
+        <UseImage :src="`/api/worlds/${world.id}/icon?rnd=${image_caches.get(world.id)}`" class="rounded-md w-full aspect-square" loading="lazy" />
       </ImageCard>
     </router-link>
 
 
-    <Dialog v-if="(user.user.group.world_limit ?? 1000000) > worlds.length" v-model:open="dialog_open" onopen="">
+    <Dialog v-if="(user.user.group.world_limit ?? 1000000) > worlds_store.worldCount()" v-model:open="dialog_open" onopen="">
       <DialogTrigger>
         <ImageCard title="New" description="Create new world">
           <div class="rounded-md w-full aspect-square flex items-center justify-center text-muted-foreground">

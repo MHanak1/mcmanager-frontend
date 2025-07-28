@@ -7,7 +7,7 @@ import 'vue-sonner/style.css'
 </script>
 
 <template>
-  <main class="h-screen overflow-hidden flex flex-col">
+  <main class="h-screen w-screen overflow-hidden flex flex-col">
     <Toaster/>
     <Header/>
     <router-view/>

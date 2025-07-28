@@ -17,7 +17,7 @@ import {
 
 const server_data = useServerDataStore()
 const user_data = useUserStore()
-let image_caches = useImageCaches()
+const image_caches = useImageCaches()
 
 const mode = useColorMode()
 

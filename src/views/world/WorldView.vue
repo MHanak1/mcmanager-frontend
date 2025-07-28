@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { mande } from 'mande'
-import {ref, watch} from "vue";
+import { onBeforeMount, onMounted, ref, watch } from 'vue'
 import type { IsValid, World, WorldRecursive, WorldStatus } from '@/lib/types.ts'
 import {useUserStore} from "@/stores/user.ts";
 import {useServerDataStore} from "@/stores/server.ts";
@@ -37,17 +37,20 @@ import { CgSpinner } from 'vue-icons-plus/cg'
 import WorldConfigView from '@/views/world/WorldConfigView.vue'
 import router from '@/router'
 import ImageUpload from '@/components/ImageUpload.vue'
+import { useAllWorldsStore } from '@/stores/world.ts'
 
 
 const api = mande("/api")
 const user = useUserStore()
 const server = useServerDataStore()
 const route = useRoute()
+const worlds_store = useAllWorldsStore()
 
+const world_loaded = ref(false)
 const data_loaded = ref(false)
-const world = ref({} as WorldRecursive)
 const world_status = ref({} as WorldStatus)
 const config = ref({} as Object)
+const log = ref("")
 
 const max_memory = ref(8196)
 const remaining_memory = ref(null as number | null)
@@ -67,7 +70,7 @@ const world_form = useForm({
 })
 
 async function validateHostname(hostname: any) {
-  if (hostname === world.value.hostname) {
+  if (hostname === worlds_store.worlds[route.params.id as string].hostname) {
     return true
   }
   const response: IsValid = await api.get(`/valid/hostname/${hostname}`)
@@ -77,7 +80,7 @@ async function validateHostname(hostname: any) {
 const onWorldUpdate = world_form.handleSubmit(async (values: any) => {
   if (await validateHostname(values.hostname)) {
     try {
-    world.value = await api.patch(`/worlds/${world.value.id}?recursive=true`, values) as WorldRecursive
+      worlds_store.worlds[route.params.id as string] = await api.patch(`/worlds/${route.params.id as string}?recursive=true`, values) as WorldRecursive
     }
     catch (error: any) {
       console.log(error)
@@ -96,11 +99,11 @@ async function updateWorldStatus(enabled: boolean) {
   if (!world_operation_running.value) {
     world_operation_running.value = true
     try {
-      world.value = await api.patch(`/worlds/${world.value.id}?recursive=true`, {enabled: enabled})
-      world_status.value = await api.get(`worlds/${world.value.id}/status`) as WorldStatus
+      worlds_store.worlds[route.params.id as string] = await api.patch(`/worlds/${route.params.id as string}?recursive=true`, {enabled: enabled})
+      world_status.value = await api.get(`worlds/${route.params.id as string}/status`) as WorldStatus
       if (enabled) {
         toast.success("World Started", {
-          description: `In a moment you will be able to connect to ${world.value.name}`,
+          description: `In a moment you will be able to connect to ${worlds_store.worlds[route.params.id as string].name}`,
         })
       }
     }
@@ -116,19 +119,69 @@ async function updateWorldStatus(enabled: boolean) {
   }
 }
 
-watch(() => route.params.id, (id) => fetchData(id as string), { immediate: true })
+async function poll() {
+  await Promise.all([
+    api.get(`worlds/${route.params.id as string}/status?THIS_IS_A_PLACEHOLDER=THIS_POLLING_IS_NOT_FINAL`),
+    api.get(`worlds/${route.params.id as string}/log?THIS_IS_A_PLACEHOLDER=THIS_POLLING_IS_NOT_FINAL`),
+  ]).then((values) => {
+    world_status.value = values[0] as WorldStatus
+    log.value = (values[1] as any).log
+    console.log(values)
+  })
+
+  setTimeout(poll, 2500);
+}
+
+onMounted(async () => {poll()});
+
+watch(() => route.params.id, (id) => { fetchData(id as string) }, { immediate: true })
 
 async function fetchData(id: string) {
   try {
+    const future = worlds_store.refreshWorld(id)
+    // check if the value was initialised to *anything* before continuing
+    if (!worlds_store.worlds[route.params.id as string]) {
+      await future
+    }
+
+    const world = worlds_store.worlds[route.params.id as string]
+
+    document.title = `${world.name} | ${server.info.name || "MCManager"}`;
+
+    let memory_usage = user.user.total_memory_usage
+
+    if (world.enabled) {
+      memory_usage -= world.allocated_memory
+    }
+
+    const remaining = user.user.group.total_memory_limit as number - memory_usage
+
+    if (user.user.group.total_memory_limit != null) {
+      remaining_memory.value = remaining
+    }
+    if (user.user.group.per_world_memory_limit != null) {
+      max_memory.value = user.user.group.per_world_memory_limit as number
+    }
+    world_form.setFieldValue('name', world.name)
+    world_form.setFieldValue('hostname', world.hostname)
+    world_form.setFieldValue('allocated_memory', world.allocated_memory)
+    world_loaded.value = true
+
     await Promise.all([
-      api.get(`worlds/${id}?recursive=true`),
       api.get(`worlds/${id}/status`),
       api.get(`worlds/${id}/config`),
+      api.get(`worlds/${id}/log`),
     ]).then((values) => {
-      world.value = values[0] as WorldRecursive
-      world_status.value = values[1] as WorldStatus
-      config.value = values[2] as Object
+      world_status.value = values[0] as WorldStatus
+      config.value = values[1] as Object
+      log.value = (values[2] as any).log
+      console.log(values)
     })
+
+    data_loaded.value = true
+
+    const other_worlds = await api.get(`worlds?enabled=true&id=!${route.params.id as string}`) as World[]
+    other_enabled_world_count.value = other_worlds.length
   }
   catch (error: any) {
     console.log(error)
@@ -137,49 +190,21 @@ async function fetchData(id: string) {
     })
     throw error
   }
-
-  document.title = `${world.value.name} | ${server.info.name || "MCManager"}`;
-
-  let memory_usage = user.user.total_memory_usage
-
-  if (world.value.enabled) {
-    memory_usage -= world.value.allocated_memory
-  }
-
-  const remaining = user.user.group.total_memory_limit as number - memory_usage
-
-  if (user.user.group.total_memory_limit != null) {
-    remaining_memory.value = remaining
-  }
-  if (user.user.group.per_world_memory_limit != null) {
-    max_memory.value = user.user.group.per_world_memory_limit as number
-  }
-  world_form.setFieldValue('name', world.value.name)
-  world_form.setFieldValue('hostname', world.value.hostname)
-  world_form.setFieldValue('allocated_memory', world.value.allocated_memory)
-  data_loaded.value = true
-
-  const other_worlds = await api.get(`worlds?enabled=true&id=!${world.value.id}`) as World[]
-  other_enabled_world_count.value = other_worlds.length
 }
 
 </script>
 
 
 <template>
-  <div class="flex flex-1 flex-col sm:flex-row overflow-y-auto" v-if="data_loaded">
+  <div class="flex flex-1 flex-col sm:flex-row overflow-y-auto w-screen" v-if="world_loaded">
     <div class="w-full min-w-[20rem] sm:max-w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 sm:overflow-y-auto">
-      <ImageUpload :icon_src="`/api/worlds/${world.id}/icon`" :icon_id="world.id">
-        <template #error>
-          <img src="@/assets/world_default.png"/>
-        </template>
-      </ImageUpload>
+      <ImageUpload :icon_src="`/api/worlds/${route.params.id as string}/icon`" :icon_id="route.params.id as string" />
 
       <div>
         <div class="flex justify-between items-center">
           <div>
-            <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">{{world.name}}</p>
-            <p class="lg:text-lg">{{world.version.mod_loader.name}} {{world.version.minecraft_version}}</p>
+            <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">{{worlds_store.worlds[route.params.id as string].name}}</p>
+            <p class="lg:text-lg">{{worlds_store.worlds[route.params.id as string].version.mod_loader.name}} {{worlds_store.worlds[route.params.id as string].version.minecraft_version}}</p>
           </div>
           <Button v-if="world_status.status === 'running'" variant="destructive" @click="updateWorldStatus(false)">
             <CgSpinner v-if="world_operation_running" class="animate-spin" />
@@ -196,7 +221,7 @@ async function fetchData(id: string) {
             Start World
           </Button>
         </div>
-        <p class="lg:text-lg">{{world.hostname}}.{{server.info.world.hostname}}{{server.info.world.port == 25565 ? '' : ':' + server.info.world.port}}</p>
+        <p class="lg:text-lg">{{worlds_store.worlds[route.params.id as string].hostname}}.{{server.info.world.hostname}}{{server.info.world.port == 25565 ? '' : ':' + server.info.world.port}}</p>
       </div>
 
       <hr/>
@@ -234,7 +259,7 @@ async function fetchData(id: string) {
             <FormControl>
               <Slider
                 v-bind="field"
-                :default-value="[world.allocated_memory]"
+                :default-value="[worlds_store.worlds[route.params.id as string].allocated_memory]"
                 :min="server.info.world.min_memory"
                 :max="max_memory"
                 :step="128"
@@ -278,7 +303,7 @@ async function fetchData(id: string) {
             </AlertDialogCancel>
             <AlertDialogAction as="a" @click="async () => {
               try {
-                await api.delete(`worlds/${world.id}`)
+                await api.delete(`worlds/${route.params.id as string}`)
                 await router.push(`/`)
                 toast.success('World deleted successfully.')
               } catch (e: any) {
@@ -295,23 +320,35 @@ async function fetchData(id: string) {
 
     </div>
 
-
-    <div class="col-span-2 h-full w-full p-4 flex flex-col xl:flex-row sm:overflow-y-auto">
-      <div class="xl:flex-2 xl:overflow-y-auto">
-        <div v-if="Object.keys(config).length > 0" class="flex flex-col gap-4">
-          <p class="text-2xl lg:text-4xl mb-1">Server Config</p>
-          <WorldConfigView :config="config" :id="world.id" />
-        </div>
-        <div v-else>
-          <p class="text-xl lg:text-2xl font-bold mb-1">Start this server to generate config and refresh this page</p>
+    <div class="p-4 gap-4 col-span-2 h-full w-full flex flex-col xl:flex-2 overflow-y-scroll">
+      <div>
+        <p class="text-2xl lg:text-4xl font-bold mb-1">Console</p>
+        <p class="text-xl lg:text-xl font-bold mb-1">This is WIP, here's latest.log for now:</p>
+        <div class="bg-black text-white h-[50vh] overflow-scroll p-2 rounded-md" >
+          <code>{{log}}</code>
         </div>
       </div>
 
-      <div class="flex flex-col gap-4 xl:flex-3 xl:overflow-y-auto">
-        <p class="text-2xl lg:text-4xl font-bold mb-1">Mods</p>
-        this is work in progress
+      <div class="flex flex-col xl:flex-row gap-4" v-if="data_loaded">
+        <div class="xl:flex-1">
+          <div v-if="Object.keys(config).length > 0" class="flex flex-col gap-4">
+            <p class="text-2xl lg:text-4xl mb-1">Server Config</p>
+            <WorldConfigView :config="config" :id="route.params.id as string" />
+          </div>
+          <div v-else>
+            <p class="text-2xl lg:text-4xl font-bold mb-1">Config</p>
+            <p class="text-xl lg:text-xl font-bold mb-1">Start this server to generate config and refresh this page</p>
+          </div>
+        </div>
+
+        <div class="xl:flex-2">
+          <p class="text-2xl lg:text-4xl font-bold mb-1">Mods</p>
+          <p class="text-xl lg:text-xl font-bold mb-1">Also WIP</p>
+        </div>
+
       </div>
     </div>
+
   </div>
 
 </template>
