@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { mande } from 'mande'
-import { onBeforeMount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeMount, onMounted, ref, watch } from 'vue'
 import type { IsValid, World, WorldRecursive, WorldStatus } from '@/lib/types.ts'
 import {useUserStore} from "@/stores/user.ts";
 import {useServerDataStore} from "@/stores/server.ts";
@@ -35,6 +35,7 @@ import { toast } from 'vue-sonner'
 import { Icon } from '@iconify/vue'
 import { CgSpinner } from 'vue-icons-plus/cg'
 import WorldConfigView from '@/views/world/WorldConfigView.vue'
+import ConsoleView from '@/views/world/ConsoleView.vue'
 import router from '@/router'
 import ImageUpload from '@/components/ImageUpload.vue'
 import { useAllWorldsStore } from '@/stores/world.ts'
@@ -50,7 +51,6 @@ const world_loaded = ref(false)
 const data_loaded = ref(false)
 const world_status = ref({} as WorldStatus)
 const config = ref({} as Object)
-const log = ref("")
 
 const max_memory = ref(8196)
 const remaining_memory = ref(null as number | null)
@@ -119,21 +119,6 @@ async function updateWorldStatus(enabled: boolean) {
   }
 }
 
-async function poll() {
-  await Promise.all([
-    api.get(`worlds/${route.params.id as string}/status?THIS_IS_A_PLACEHOLDER=THIS_POLLING_IS_NOT_FINAL`),
-    api.get(`worlds/${route.params.id as string}/log?THIS_IS_A_PLACEHOLDER=THIS_POLLING_IS_NOT_FINAL`),
-  ]).then((values) => {
-    world_status.value = values[0] as WorldStatus
-    log.value = (values[1] as any).log
-    console.log(values)
-  })
-
-  setTimeout(poll, 2500);
-}
-
-onMounted(async () => {poll()});
-
 watch(() => route.params.id, (id) => { fetchData(id as string) }, { immediate: true })
 
 async function fetchData(id: string) {
@@ -145,6 +130,12 @@ async function fetchData(id: string) {
     }
 
     const world = worlds_store.worlds[route.params.id as string]
+
+    nextTick(() => {
+      world_form.setFieldValue('name', world.name)
+      world_form.setFieldValue('hostname', world.hostname)
+      world_form.setFieldValue('allocated_memory', world.allocated_memory)
+    })
 
     document.title = `${world.name} | ${server.info.name || "MCManager"}`;
 
@@ -159,22 +150,18 @@ async function fetchData(id: string) {
     if (user.user.group.total_memory_limit != null) {
       remaining_memory.value = remaining
     }
+
     if (user.user.group.per_world_memory_limit != null) {
       max_memory.value = user.user.group.per_world_memory_limit as number
     }
-    world_form.setFieldValue('name', world.name)
-    world_form.setFieldValue('hostname', world.hostname)
-    world_form.setFieldValue('allocated_memory', world.allocated_memory)
     world_loaded.value = true
 
     await Promise.all([
       api.get(`worlds/${id}/status`),
       api.get(`worlds/${id}/config`),
-      api.get(`worlds/${id}/log`),
     ]).then((values) => {
       world_status.value = values[0] as WorldStatus
       config.value = values[1] as Object
-      log.value = (values[2] as any).log
       console.log(values)
     })
 
@@ -320,30 +307,27 @@ async function fetchData(id: string) {
 
     </div>
 
-    <div class="p-4 gap-4 col-span-2 h-full w-full flex flex-col xl:flex-2 overflow-y-scroll">
+    <div class="p-4 gap-4 col-span-2 h-full w-full flex flex-col xl:flex-2 xl:overflow-y-auto">
       <div>
-        <p class="text-2xl lg:text-4xl font-bold mb-1">Console</p>
-        <p class="text-xl lg:text-xl font-bold mb-1">This is WIP, here's latest.log for now:</p>
-        <div class="bg-black text-white h-[50vh] overflow-scroll p-2 rounded-md" >
-          <code>{{log}}</code>
-        </div>
+        <ConsoleView v-if="world_status.status == 'running'" :id="route.params.id as string"/>
+        <ConsoleView v-else :id="route.params.id as string" :disabled="true" />
       </div>
 
       <div class="flex flex-col xl:flex-row gap-4" v-if="data_loaded">
         <div class="xl:flex-1">
           <div v-if="Object.keys(config).length > 0" class="flex flex-col gap-4">
-            <p class="text-2xl lg:text-4xl mb-1">Server Config</p>
+            <p class="text-2xl lg:text-4xl mb-1">Config</p>
             <WorldConfigView :config="config" :id="route.params.id as string" />
           </div>
           <div v-else>
-            <p class="text-2xl lg:text-4xl font-bold mb-1">Config</p>
+            <p class="text-2xl lg:text-4xl mb-1">Config</p>
             <p class="text-xl lg:text-xl font-bold mb-1">Start this server to generate config and refresh this page</p>
           </div>
         </div>
 
         <div class="xl:flex-2">
-          <p class="text-2xl lg:text-4xl font-bold mb-1">Mods</p>
-          <p class="text-xl lg:text-xl font-bold mb-1">Also WIP</p>
+          <p class="text-2xl lg:text-4xl mb-1">Mods</p>
+          <p class="text-xl lg:text-xl font-bold mb-1">Under construction</p>
         </div>
 
       </div>
