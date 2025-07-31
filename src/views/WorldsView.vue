@@ -107,7 +107,7 @@ onBeforeMount(async () => {
     })
   }
   catch (error: any) {
-      console.log(error)
+      console.error(error)
       toast.error('Error Loading Page', {
         description: `${error.message}`,
       })

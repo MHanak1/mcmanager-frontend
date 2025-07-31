@@ -24,10 +24,9 @@ export const useConsole = defineStore('console', {
 
       const ticket = ((await api.post("/console/ticket")) as any);
 
-      console.log(ticket);
+      const secure = location.protocol == 'https:'
 
-      console.log("CHANGEME")
-      this.socket = io(`ws://${window.location.host}/ws/console`, {
+      this.socket = io(`${secure ? 'wss' : 'ws'}://${window.location.host}/ws/console`, {
         auth: ticket
       })
 
@@ -37,14 +36,19 @@ export const useConsole = defineStore('console', {
 
       this.socket.on("connect", () => {
         if (this.id != null) {
-          this.attach(this.id)
+          //force reconnect to the previously conected id if the connection is lost
+          const id = this.id
+          this.id = null
+          this.attach(id)
         }
       })
 
       this.socket.on("status", (status: any) => {
-        if (status.connectd) {
-          this.id = status.connected.id
-        } else if (status.disconnected) {
+        if (status.connected) {
+          console.info("console connected")
+          this.id = status.connected
+        } else if (status == 'disconnected') {
+          console.info("console disconnected")
           this.id = null
         }
       })
@@ -79,23 +83,26 @@ export const useConsole = defineStore('console', {
     },
 
     async attach(id: string) {
+      //already attached
+      if (this.id == id) {return}
       this.clear();
 
+      this.world_status = await api.get(`/worlds/${id}/status`) as WorldStatus
       const initial_log: string = (await api.get(`/worlds/${id}/log`) as any).log
-      console.log(initial_log)
-      console.log(typeof initial_log)
-      let lines: string[] = initial_log.split("\n")
-      console.log(lines)
+      const lines: string[] = initial_log.split("\n")
       for (const line of lines) {
         this.logs[this.seq_offset] = line
         this.seq_offset++
       }
 
+      console.debug("emit subscribe")
       this.socket.emit("subscribe", { id })
     },
 
     async detach() {
-      this.socket.emit("unsubscribe")
+      if (this.socket) {
+        this.socket.emit("unsubscribe")
+      }
     }
   }
 })

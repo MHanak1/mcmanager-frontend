@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, nextTick } from 'vue'
 import { useConsole } from '@/stores/console.ts'
-import { tryOnUnmounted, useScroll } from '@vueuse/core'
+import { tryOnScopeDispose, tryOnUnmounted, useScroll } from '@vueuse/core'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
+import { onBeforeRouteLeave } from 'vue-router'
 
 const props = defineProps<{
   class?: string,
-  disabled?: boolean,
   id: string,
 }>()
 
@@ -44,7 +44,7 @@ onMounted(async () => {
   })
 })
 
-tryOnUnmounted(async () => {
+onBeforeRouteLeave(async () => {
   await server_console.detach()
 })
 
@@ -60,7 +60,7 @@ const command = ref('')
       </code>
     </div>
     <div class="flex-1"/>
-    <div class="flex gap-2">
+    <div class="flex gap-2" v-if="server_console.world_status?.status == 'running'">
       <code>
         >
       </code>
@@ -71,7 +71,6 @@ const command = ref('')
             command = ''
           }"
           v-model="command"
-          :disabled="props.disabled"
           class="border-none outline-none w-full "
         />
       </code>

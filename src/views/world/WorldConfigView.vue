@@ -137,16 +137,6 @@ async function onSubmit(values: any) {
 
 const formSchema = z.object(schema)
 
-console.log(schema)
-console.log({
-  username: z
-    .string({
-      required_error: 'Username is required.',
-    })
-    .min(2, {
-      message: 'Username must be at least 2 characters.',
-    }),
-})
 </script>
 
 <template>

@@ -39,6 +39,7 @@ import ConsoleView from '@/views/world/ConsoleView.vue'
 import router from '@/router'
 import ImageUpload from '@/components/ImageUpload.vue'
 import { useAllWorldsStore } from '@/stores/world.ts'
+import { useConsole } from '@/stores/console.ts'
 
 
 const api = mande("/api")
@@ -46,6 +47,7 @@ const user = useUserStore()
 const server = useServerDataStore()
 const route = useRoute()
 const worlds_store = useAllWorldsStore()
+const server_console = useConsole()
 
 const world_loaded = ref(false)
 const data_loaded = ref(false)
@@ -83,7 +85,7 @@ const onWorldUpdate = world_form.handleSubmit(async (values: any) => {
       worlds_store.worlds[route.params.id as string] = await api.patch(`/worlds/${route.params.id as string}?recursive=true`, values) as WorldRecursive
     }
     catch (error: any) {
-      console.log(error)
+      console.error(error)
       toast.error('error updating world', {
         description: `${error.message}`,
       })
@@ -108,7 +110,7 @@ async function updateWorldStatus(enabled: boolean) {
       }
     }
     catch (error: any) {
-      console.log(error)
+      console.error(error)
       toast.error(`Error ${enabled ? 'Starting' : 'Stopping'} World`, {
         description: `${error.message}`,
       })
@@ -171,7 +173,7 @@ async function fetchData(id: string) {
     other_enabled_world_count.value = other_worlds.length
   }
   catch (error: any) {
-    console.log(error)
+    console.error(error)
     toast.error('Error Loading Page', {
       description: `${error.message}`,
     })
@@ -193,7 +195,7 @@ async function fetchData(id: string) {
             <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">{{worlds_store.worlds[route.params.id as string].name}}</p>
             <p class="lg:text-lg">{{worlds_store.worlds[route.params.id as string].version.mod_loader.name}} {{worlds_store.worlds[route.params.id as string].version.minecraft_version}}</p>
           </div>
-          <Button v-if="world_status.status === 'running'" variant="destructive" @click="updateWorldStatus(false)">
+          <Button v-if="server_console.world_status?.status == 'running'" variant="destructive" @click="updateWorldStatus(false)">
             <CgSpinner v-if="world_operation_running" class="animate-spin" />
             <Icon v-else icon="radix-icons:stop"/>
             Stop World
@@ -310,7 +312,7 @@ async function fetchData(id: string) {
     <div class="p-4 gap-4 col-span-2 h-full w-full flex flex-col xl:flex-2 xl:overflow-y-auto">
       <div>
         <ConsoleView v-if="world_status.status == 'running'" :id="route.params.id as string"/>
-        <ConsoleView v-else :id="route.params.id as string" :disabled="true" />
+        <ConsoleView v-else :id="route.params.id as string"/>
       </div>
 
       <div class="flex flex-col xl:flex-row gap-4" v-if="data_loaded">
