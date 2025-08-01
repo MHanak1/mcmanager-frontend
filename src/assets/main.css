@@ -4,10 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 @tailwind effects;
-#app {
-  min-height: 100vh;
-  min-width: 100vw;
-}
 
 .bg_gradient {
   background: radial-gradient(circle at 100% 250%, var(--color-bg-end) 50%, var(--color-bg-start) 100%);

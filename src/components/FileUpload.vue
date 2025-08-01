@@ -11,6 +11,7 @@ const props = defineProps<{
   url: string,
   file_name: string,
   hover_text?: string,
+  class?: string
 }>()
 
 const emit = defineEmits(['uploaded', 'error'])
@@ -34,11 +35,11 @@ async function onFileChanged($event: Event) {
 </script>
 
 <template>
-  <div class="w-full relative">
+  <div :class="`w-full relative ${props.class}`">
     <slot/>
     <div class="flex w-full h-full absolute left-0 top-0 justify-center items-center group">
       <input
-        class="w-full h-full group-hover:bg-background/20 transition-colors text-black/0 z-50"
+        class="w-full h-full group-hover:bg-background/40 transition-colors text-black/0 z-50"
         type="file"
         @change="onFileChanged($event)"
         accept="image/png, image/jpeg, image/webl, image/gif"/>

@@ -68,14 +68,17 @@ const mode = useColorMode()
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent class="m-2">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>
+          {{user_data.user.username}}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <router-link :to="'/profile'">
-            Profile
-          </router-link>
-        </DropdownMenuItem>
+        <router-link :to="'/profile'">
+          <DropdownMenuItem>
+            My Account
+          </DropdownMenuItem>
+        </router-link>
         <DropdownMenuItem @click="user_data.logout()">
           Log Out
         </DropdownMenuItem>

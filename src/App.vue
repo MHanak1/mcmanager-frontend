@@ -37,7 +37,7 @@ router.beforeEach(async (to, from) => {
 </script>
 
 <template>
-  <RouterView v-if="server_data.initialised && user_data.initialised" />
+  <RouterView v-if="server_data.initialised && user_data.initialised"/>
 </template>
 
 <style scoped>

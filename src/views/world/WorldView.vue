@@ -187,7 +187,7 @@ async function fetchData(id: string) {
 <template>
   <div class="flex flex-1 flex-col sm:flex-row overflow-y-auto w-screen" v-if="world_loaded">
     <div class="w-full min-w-[20rem] sm:max-w-[30rem] flex flex-col bg-card/50 shadow-shadow shadow-lg mb-0 p-4 gap-4 sm:overflow-y-auto">
-      <ImageUpload :icon_src="`/api/worlds/${route.params.id as string}/icon`" :icon_id="route.params.id as string" />
+      <ImageUpload :icon_src="`/api/worlds/${route.params.id as string}/icon`" :icon_id="route.params.id as string" class="rounded-md" />
 
       <div>
         <div class="flex justify-between items-center">
