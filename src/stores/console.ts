@@ -9,6 +9,7 @@ export const useConsole = defineStore('console', {
 
     return {
       initialised: false,
+      failed: false,
       id: null as string | null,
       socket: null as any,
       logs: [] as string[],
@@ -21,30 +22,36 @@ export const useConsole = defineStore('console', {
       if (this.initialised) {
         return
       }
+      try {
 
-      const ticket = ((await api.post("/console/ticket")) as any);
+        const ticket = ((await api.post("/console/ticket")) as any);
 
-      const secure = location.protocol == 'https:'
+        const secure = location.protocol == 'https:'
 
-      this.socket = io(`${secure ? 'wss' : 'ws'}://${window.location.host}/ws/console`, {
-        auth: ticket
-      })
+        this.socket = io(`${secure ? 'wss' : 'ws'}://${window.location.host}/ws/console`, {
+          auth: ticket
+        })
 
-      this.socket.onAny((eventName: any, ...args: any) => {
-        console.debug(eventName, args);
-      });
+        this.socket.onAny((eventName: any, ...args: any) => {
+          console.debug(eventName, args);
+        });
+      } catch {
+        this.failed = true
+      }
 
       this.socket.on("connect", () => {
         if (this.id != null) {
-          //force reconnect to the previously conected id if the connection is lost
-          const id = this.id
-          this.id = null
-          this.attach(id)
+          this.reconnect(this.id)
         }
+      })
+
+      this.socket.on("disconnect", () => {
+        this.failed = true
       })
 
       this.socket.on("status", (status: any) => {
         if (status.connected) {
+          this.failed = false
           console.info("console connected")
           this.id = status.connected
         } else if (status == 'disconnected') {
@@ -61,6 +68,15 @@ export const useConsole = defineStore('console', {
           this.logs[mcconsole.log.seq + this.seq_offset] = mcconsole.log.message
         } else if (mcconsole.status) {
           this.world_status = mcconsole.status
+        }
+      })
+
+      this.socket.on("error", (error: string) => {
+        this.failed=true
+        if (error == 'invalid_ticket') {
+          this.initialised = false
+          this.init()
+          this.reconnect(this.id as string)
         }
       })
 
@@ -97,6 +113,11 @@ export const useConsole = defineStore('console', {
 
       console.debug("emit subscribe")
       this.socket.emit("subscribe", { id })
+    },
+
+    async reconnect(id: string) {
+      this.id = null
+      this.attach(id)
     },
 
     async detach() {
