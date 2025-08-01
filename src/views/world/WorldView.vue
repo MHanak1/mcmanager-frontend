@@ -56,7 +56,6 @@ const config = ref({} as Object)
 
 const max_memory = ref(8196)
 const remaining_memory = ref(null as number | null)
-const other_enabled_world_count = ref(0)
 
 const world_operation_running = ref(false)
 
@@ -168,9 +167,6 @@ async function fetchData(id: string) {
     })
 
     data_loaded.value = true
-
-    const other_worlds = await api.get(`worlds?enabled=true&id=!${route.params.id as string}`) as World[]
-    other_enabled_world_count.value = other_worlds.length
   }
   catch (error: any) {
     console.error(error)
@@ -200,7 +196,7 @@ async function fetchData(id: string) {
             <Icon v-else icon="radix-icons:stop"/>
             Stop World
           </Button>
-          <Button v-else-if="other_enabled_world_count < (user.user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
+          <Button v-else-if="Object.values(worlds_store.worlds).filter(world => world.enabled).length < (user.user.group.active_world_limit ?? 1000000)" variant="green" @click="updateWorldStatus(true)">
             <CgSpinner v-if="world_operation_running" class="animate-spin"/>
             <Icon v-else icon="radix-icons:play"/>
             Start World
